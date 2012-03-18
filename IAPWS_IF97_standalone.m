@@ -337,6 +337,124 @@ if any(any(valid4b))
     mu(valid4b) = mu0.*mu1*mustar;
 end
 end
+function mu = mu_pT(p,T) 
+% mu = mu_pT(p,T)
+%   Viscosity, mu [Pa*s], as a function of pressure, p [MPa], and temperature, T [K]
+% based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
+% Ausra, Inc.
+% June 23, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+initnan = NaN(dim);
+mu = initnan;
+%% constants and calculated
+Tc = 647.096; % [K]
+rhoc = 322.0; % [kg/m^3]
+mustar = 1.00e-6; % [Pa*s]
+Hi = [1.67752 2.20462 0.6366564 -0.241605];
+Hij = [0,1,2,3,0,1,2,3,5,0,1,2,3,4,0,1,0,3,4,3,5;0,0,0,0,1,1,1,1,1,2,2,2,2,2,3,3,4,4,5,6,6; ...
+    0.520094,0.0850895,-1.08374,-0.289555,0.222531,0.999115,1.88797,1.26613,0.120573,-0.281378,-0.906851,-0.772479, ...
+    -0.489837,-0.257040,0.161913,0.257399,-0.0325372,0.0698452,0.00872102,-0.00435673,-0.000593264];
+Nterms = 21;
+Tmin = 273.16; % [K] minimum temperature is triple point
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+TB23 = 863.15; % [K] temperature of boundary between region 2 and 3
+Tmax = 1073.15; % [K] maximum valid temperature
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+pmax = 100; % [MPa] maximum valid pressure
+psat = psat_T(T); % [MPa] saturation pressures
+pB23 = initnan; valid = T>=TB13 & T<=TB23;
+pB23(valid) = pB23_T(T(valid)); % [MPa] pressure on boundary between region 2 and region 3
+%% valid ranges
+valid1 = p>=psat & p<=pmax & T>=Tmin & T<=TB13; % valid range for region 1, include B13 in region 1
+valid2 = p>=pmin & ((T>=Tmin & T<=TB13 & p<=psat) | (T>TB13 & T<=TB23 & p<=pB23) | (T>TB23 & T<=Tmax & p<=pmax)); % valid range for region 2, include B23 in region 2
+valid3 = p>pB23 & p<=pmax & T>TB13 & T<TB23;
+if any(any(valid1))
+    T1 = T(valid1);rho1bar = 1./v1_pT(p(valid1),T1)/rhoc;T1bar = T1/Tc;
+    mu0 = 100*sqrt(T1bar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T1bar)./T1bar)./T1bar);
+    L = length(T1);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T1bar = T1bar*ones(1,Nterms);rho1bar = rho1bar*ones(1,Nterms);
+    mu1 = exp(sum(rho1bar.*(1./T1bar-1).^I.*HIJ.*(rho1bar-1).^J,2));
+    mu(valid1) = mu0.*mu1*mustar;
+end
+if any(any(valid2))
+    T2 = T(valid2);rho2bar = 1./v2_pT(p(valid2),T2)/rhoc;T2bar = T2/Tc;
+    mu0 = 100*sqrt(T2bar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2bar)./T2bar)./T2bar);
+    L = length(T2);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T2bar = T2bar*ones(1,Nterms);rho2bar = rho2bar*ones(1,Nterms);
+    mu1 = exp(sum(rho2bar.*(1./T2bar-1).^I.*HIJ.*(rho2bar-1).^J,2));
+    mu(valid2) = mu0.*mu1*mustar;
+end
+if any(any(valid3))
+    T3 = T(valid3);rho3bar = 1./v_pT(p(valid3),T3)/rhoc;T3bar = T3/Tc;
+    mu0 = 100*sqrt(T3bar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T3bar)./T3bar)./T3bar);
+    L = length(T3);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T3bar = T3bar*ones(1,Nterms);rho3bar = rho3bar*ones(1,Nterms);
+    mu1 = exp(sum(rho3bar.*(1./T3bar-1).^I.*HIJ.*(rho3bar-1).^J,2));
+    mu(valid3) = mu0.*mu1*mustar;
+end
+end
+function dhLdp = dhLdp_p(p) 
+% dhLdp = dhLdp_ph(p)
+%   Derivative of enthalpy wrt pressure of saturated liquid, dhLdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
+% based on IAPWS-IF97
+% Ausra, Inc.
+% June 16, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+dhLdp = NaN(dim);
+%% constants and calculated
+conversion_factor = 1e-3; % [MPa/(kJ/m^3)]
+Tmin = 273.16; % [K] minimum temperature is triple point
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pc = 22.064; % [MPa] critical pressure
+Tsat = Tsat_p(p); % [K] saturation temperatures
+%% valid ranges
+valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
+valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
+    dhLdp(valid4a) = v1_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav1_pT(p4a,Tsat4a))/conversion_factor + cp1_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);
+    dhLdp(valid4b) = (v3L - Tsat4b.*alphap3L./betap3_rhoT(rho3L,Tsat4b).*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
+end
+end
+function dhVdp = dhVdp_p(p) 
+% dhVdp = dhVdp_ph(p)
+%   Derivative of enthalpy wrt pressure of saturated vapor, dhVdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
+% based on IAPWS-IF97
+% Ausra, Inc.
+% June 16, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+dhVdp = NaN(dim);
+%% constants and calculated
+conversion_factor = 1e-3; % [MPa/(kJ/m^3)]
+Tmin = 273.16; % [K] minimum temperature is triple point
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pc = 22.064; % [MPa] critical pressure
+Tsat = Tsat_p(p); % [K] saturation temperatures
+%% valid ranges
+valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
+valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
+    dhVdp(valid4a) = v2_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav2_pT(p4a,Tsat4a))/conversion_factor + cp2_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3V = vV_p(p4b);rho3V = 1./v3V;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);
+    dhVdp(valid4b) = (v3V - Tsat4b.*alphap3V./betap3_rhoT(rho3V,Tsat4b).*(1 + p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3V,Tsat4b).*dTsatdpsat4b;
+end
+end
 function dmudh = dmudh_ph(p,h)
 % dmudh = dmudh_ph(p,h)
 %   Derivative of viscosity, dmudh [(Pa*s)/(kJ/kg)], with respect to enthalpy, h [kJ/kg] at constant pressure as a function of
