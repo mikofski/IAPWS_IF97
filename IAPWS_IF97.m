@@ -11,7 +11,7 @@ function out = IAPWS_IF97(fun,in1,in2)
 %   scalar is entered for one input and the other input is a vector or matrix, then the scalar is repeated to form a
 %   vector or matrix of the same size as the other input.
 if nargin<2, out = NaN; return, end
-if ~any(strcmpi(fun,{'k_pT','k_ph','mu_pT','mu_ph','dhLdp_p','dhVdp_p','dvdp_ph','dvdh_ph','dTdp_ph','cp_ph','h_pT','v_pT', ...
+if ~any(strcmpi(fun,{'k_pT','k_ph','mu_pT','mu_ph','dmudh_ph','dmudp_ph','dhLdp_p','dhVdp_p','dvdp_ph','dvdh_ph','dTdp_ph','cp_ph','h_pT','v_pT', ...
         'vL_p','vV_p','hL_p','hV_p','T_ph','v_ph','psat_T','Tsat_p','h1_pT','h2_pT','h3_rhoT','v1_pT','v2_pT','cp1_pT', ...
         'cp2_pT','cp3_rhoT','cv3_rhoT','alphav1_pT','alphav2_pT','alphap3_rhoT','betap3_rhoT','kappaT1_pT','kappaT2_pT',...
         'dgammadtau1_pT','dgammadpi1_pT','dgammadtautau1_pT','dgammadpipi1_pT','dgammadpitau1_pT','dgammadtau2_pT', ...
@@ -438,6 +438,368 @@ if any(any(valid3))
     T3bar = T3bar*ones(1,Nterms);rho3bar = rho3bar*ones(1,Nterms);
     mu1 = exp(sum(rho3bar.*(1./T3bar-1).^I.*HIJ.*(rho3bar-1).^J,2));
     mu(valid3) = mu0.*mu1*mustar;
+end
+end
+function dmudh = dmudh_ph(p,h)
+% dmudh = dmudh_ph(p,h)
+%   Derivative of viscosity, dmudh [(Pa*s)/(kJ/kg)], with respect to enthalpy, h [kJ/kg] at constant pressure as a function of
+%   pressure, p [MPa], and enthalpy, h [kJ/kg]
+% based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
+% Ausra, Inc.
+% June 23, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+initnan = NaN(dim);
+dmudh = initnan;
+%% constants and calculated
+Tc = 647.096; % [K]
+rhoc = 322.0; % [kg/m^3]
+mustar = 1.00e-6; % [Pa*s]
+Hi = [1.67752 2.20462 0.6366564 -0.241605];
+Hij = [0,1,2,3,0,1,2,3,5,0,1,2,3,4,0,1,0,3,4,3,5;0,0,0,0,1,1,1,1,1,2,2,2,2,2,3,3,4,4,5,6,6; ...
+    0.520094,0.0850895,-1.08374,-0.289555,0.222531,0.999115,1.88797,1.26613,0.120573,-0.281378,-0.906851,-0.772479, ...
+    -0.489837,-0.257040,0.161913,0.257399,-0.0325372,0.0698452,0.00872102,-0.00435673,-0.000593264];
+Nterms = 21;
+Tmin = 273.16; % [K] minimum temperature is triple point
+T2bcsat = 554.485; % [K] saturation temperature at 5.85 kJ/kg/K isentropic line between region 2b and 2c
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+Tmax = 1073.15; % [K] maximum temperature
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+p2ab = 4; % [MPa] pressure along boundary between region 2a and 2b
+p2bcsat = psat_T(T2bcsat); % [MPa] saturation pressure at 5.85 kJ/kg/K isentropic line between region 2b and 2c
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pmax = 100; % [MPa] maximum pressure
+h1B13L = h1_pT(pB13sat,TB13); % [kJ/kg] saturated liquid enthalpy at boundary between region 1, region 3 and region 4
+h2B13V = h2_pT(pB13sat,TB13); % [kJ/kg] saturated vapor enthalpy at boundary between region 2, region 3 and region 4
+%% calculated matrices
+Tsat = Tsat_p(p); % [K] saturation temperatures
+h1min = initnan;h2max = initnan;valid = p>=pmin & p<=pmax;pvalid = p(valid); % initialize matricies with NaN and set valid range of parameters
+if any(any(valid))
+    Tmin = Tmin*ones(dim);Tmax = Tmax*ones(dim); % copy to matrix of size dim
+    h1min(valid) = h1_pT(pvalid,Tmin(valid)); % [kJ/kg] minimum enthalpies
+    h2max(valid) = h2_pT(pvalid,Tmax(valid)); % [kJ/kg] maximum enthalpies in region 2
+end
+h1L = initnan;h2V = initnan;valid = p>=pmin & p<=pB13sat;pvalid = p(valid); % initialize matricies with NaN and set valid range of parameters
+if any(any(valid))
+    h1L(valid) = h1_pT(pvalid,Tsat(valid)); % [kJ/kg] saturated liquid enthalpies in region 1
+    h2V(valid) = h2_pT(pvalid,Tsat(valid)); % [kJ/kg] saturated vapor enthalpies in region 2
+end
+h1B13 = initnan;h3ab = initnan;h2B23 = initnan;valid = p>=pB13sat & p<=pmax;pvalid = p(valid); % initialize matricies with NaN and set valid range of parameters
+if any(any(valid))
+    TB13 = TB13*ones(dim); % copy to matrix of size dim
+    h1B13(valid) = h1_pT(pvalid,TB13(valid)); % [kJ/kg] enthalpies on boundary between region 1 and region 3
+    h3ab(valid) = h3ab_p(pvalid); % [kJ/kg] enthalpies on critical entropy isentropic line between regions 3a and region 3b
+    h2B23(valid) = h2_pT(pvalid,TB23_p(pvalid)); % [kJ/kg] enthalpies on boundary between region 2 and region 3
+end
+h2bc = initnan;valid = p>=p2bcsat & p<=pmax; % initialize matricies with NaN and set valid range of parameters
+h2bc(valid) = h2bc_p(p(valid)); % [kJ/kg] enthalpies on boundary between region 2b and 2c
+p3sat = pB13sat*ones(dim);valid = h>=h1B13L & h<=h2B13V; % % do NOT use NaN to initialize p3sat, b/c for h<h1B13L or h>h2B13V p>NaN = 0, instead use pB13sat
+if any(any(valid))
+    p3sat(valid) = p3sat_h(h(valid)); % [MPa] saturation pressure on boundary between region 3 and 4
+end
+%% valid ranges
+valid1 = (p>=pmin & p<=pB13sat & h>=h1min & h<=h1L) | (p>pB13sat & p<=pmax & h>=h1min & h<=h1B13); % valid range for region 1
+valid2a = p>=pmin & p<=p2ab & h>h2V & h<=h2max; % valid range for region 2a
+valid2b = (p>p2ab & p<=p2bcsat & h>h2V & h<=h2max) | (p>p2bcsat & p<=pmax & h>h2bc & h<=h2max); % valid range for region 2b
+valid2c = (p>p2bcsat & p<=pB13sat & h>h2V & h<=h2bc) | (p>pB13sat & p<=pmax & h>h2B23 & h<=h2bc); % valid range for region 2c
+valid3a = p>p3sat & p<=pmax & h>h1B13 & h<=h3ab; % valid range for region 3a
+valid3b = p>p3sat & p<=pmax & h>h3ab & h<=h2B23; % valid range for region 3b
+valid4a = p>=pmin & p<=pB13sat & h>h1L & h<=h2V; % valid range for region 4a
+valid4b = p>pB13sat & p<=p3sat & h>h1B13L & h<=h2B13V; % valid range for region 4b
+if any(any(valid1))
+    p1 = p(valid1);h1 = h(valid1);T1 = T1_ph(p1,h1);v1 = v1_pT(p1,T1);rho1bar = 1./v1/rhoc;T1bar = T1/Tc;
+    mu0 = 100*sqrt(T1bar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T1bar)./T1bar)./T1bar);
+    dmu0dT = mu0/2./T1bar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T1bar)./T1bar)./T1bar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T1bar)./T1bar)./T1bar);
+    L = length(p1);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T1bar = T1bar*ones(1,Nterms);rho1bar = rho1bar*ones(1,Nterms);
+    mu1 = exp(sum(rho1bar.*(1./T1bar-1).^I.*HIJ.*(rho1bar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho1bar.*I.*(1./T1bar-1).^(I-1).*(-1./T1bar.^2).*HIJ.*(rho1bar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T1bar-1).^I.*HIJ.*(rho1bar-1).^J,2) + sum(rho1bar.*(1./T1bar-1).^I.*J.*HIJ.*(rho1bar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudh(valid1) = -dmudrho./v1.^2.*dvdh_ph(p1,h1) + dmudT./cp_ph(p1,h1);
+end
+if any(any(valid2a))
+    p2a = p(valid2a);h2 = h(valid2a);T2a = T2a_ph(p2a,h2);v2 = v2_pT(p2a,T2a);rho2abar = 1./v2/rhoc;T2abar = T2a/Tc;
+    mu0 = 100*sqrt(T2abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2abar)./T2abar)./T2abar);
+    dmu0dT = mu0/2./T2abar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T2abar)./T2abar)./T2abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2abar)./T2abar)./T2abar);
+    L = length(p2a);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T2abar = T2abar*ones(1,Nterms);rho2abar = rho2abar*ones(1,Nterms);
+    mu1 = exp(sum(rho2abar.*(1./T2abar-1).^I.*HIJ.*(rho2abar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho2abar.*I.*(1./T2abar-1).^(I-1).*(-1./T2abar.^2).*HIJ.*(rho2abar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T2abar-1).^I.*HIJ.*(rho2abar-1).^J,2) + sum(rho2abar.*(1./T2abar-1).^I.*J.*HIJ.*(rho2abar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudh(valid2a) = -dmudrho./v2.^2.*dvdh_ph(p2a,h2) + dmudT./cp_ph(p2a,h2);
+end
+if any(any(valid2b))
+    p2b = p(valid2b);h2 = h(valid2b);T2b = T2b_ph(p2b,h2);v2 = v2_pT(p2b,T2b);rho2bbar = 1./v2/rhoc;T2bbar = T2b/Tc;
+    mu0 = 100*sqrt(T2bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2bbar)./T2bbar)./T2bbar);
+    dmu0dT = mu0/2./T2bbar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T2bbar)./T2bbar)./T2bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2bbar)./T2bbar)./T2bbar);
+    L = length(p2b);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T2bbar = T2bbar*ones(1,Nterms);rho2bbar = rho2bbar*ones(1,Nterms);
+    mu1 = exp(sum(rho2bbar.*(1./T2bbar-1).^I.*HIJ.*(rho2bbar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho2bbar.*I.*(1./T2bbar-1).^(I-1).*(-1./T2bbar.^2).*HIJ.*(rho2bbar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T2bbar-1).^I.*HIJ.*(rho2bbar-1).^J,2) + sum(rho2bbar.*(1./T2bbar-1).^I.*J.*HIJ.*(rho2bbar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudh(valid2b) = -dmudrho./v2.^2.*dvdh_ph(p2b,h2) + dmudT./cp_ph(p2b,h2);
+end
+if any(any(valid2c))
+    p2c = p(valid2c);h2 = h(valid2c);T2c = T2c_ph(p2c,h2);v2 = v2_pT(p2c,T2c);rho2cbar = 1./v2/rhoc;T2cbar = T2c/Tc;
+    mu0 = 100*sqrt(T2cbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2cbar)./T2cbar)./T2cbar);
+    dmu0dT = mu0/2./T2cbar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T2cbar)./T2cbar)./T2cbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2cbar)./T2cbar)./T2cbar);
+    L = length(p2c);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T2cbar = T2cbar*ones(1,Nterms);rho2cbar = rho2cbar*ones(1,Nterms);
+    mu1 = exp(sum(rho2cbar.*(1./T2cbar-1).^I.*HIJ.*(rho2cbar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho2cbar.*I.*(1./T2cbar-1).^(I-1).*(-1./T2cbar.^2).*HIJ.*(rho2cbar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T2cbar-1).^I.*HIJ.*(rho2cbar-1).^J,2) + sum(rho2cbar.*(1./T2cbar-1).^I.*J.*HIJ.*(rho2cbar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudh(valid2c) = -dmudrho./v2.^2.*dvdh_ph(p2c,h2) + dmudT./cp_ph(p2c,h2);
+end
+if any(any(valid3a))
+    p3a = p(valid3a);h3a = h(valid3a);T3 = T3a_ph(p3a,h3a);T3abar = T3/Tc;v3 = v3a_ph(p3a,h3a);rho3abar = 1./v3/rhoc;
+    mu0 = 100*sqrt(T3abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T3abar)./T3abar)./T3abar);
+    dmu0dT = mu0/2./T3abar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T3abar)./T3abar)./T3abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T3abar)./T3abar)./T3abar);
+    L = length(p3a);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T3abar = T3abar*ones(1,Nterms);rho3abar = rho3abar*ones(1,Nterms);
+    mu1 = exp(sum(rho3abar.*(1./T3abar-1).^I.*HIJ.*(rho3abar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho3abar.*I.*(1./T3abar-1).^(I-1).*(-1./T3abar.^2).*HIJ.*(rho3abar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T3abar-1).^I.*HIJ.*(rho3abar-1).^J,2) + sum(rho3abar.*(1./T3abar-1).^I.*J.*HIJ.*(rho3abar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudh(valid3a) = -dmudrho./v3.^2.*dvdh_ph(p3a,h3a) + dmudT./cp_ph(p3a,h3a);
+end
+if any(any(valid3b))
+    p3b = p(valid3b);h3b = h(valid3b);T3 = T3b_ph(p3b,h3b);T3bbar = T3/Tc;v3 = v3b_ph(p3b,h3b);rho3bbar = 1./v3/rhoc;
+    mu0 = 100*sqrt(T3bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T3bbar)./T3bbar)./T3bbar);
+    dmu0dT = mu0/2./T3bbar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T3bbar)./T3bbar)./T3bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T3bbar)./T3bbar)./T3bbar);
+    L = length(p3b);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T3bbar = T3bbar*ones(1,Nterms);rho3bbar = rho3bbar*ones(1,Nterms);
+    mu1 = exp(sum(rho3bbar.*(1./T3bbar-1).^I.*HIJ.*(rho3bbar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho3bbar.*I.*(1./T3bbar-1).^(I-1).*(-1./T3bbar.^2).*HIJ.*(rho3bbar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T3bbar-1).^I.*HIJ.*(rho3bbar-1).^J,2) + sum(rho3bbar.*(1./T3bbar-1).^I.*J.*HIJ.*(rho3bbar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudh(valid3b) = -dmudrho./v3.^2.*dvdh_ph(p3b,h3b) + dmudT./cp_ph(p3b,h3b);
+end
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);h1L4a = h1L(valid4a);
+    h4 = h(valid4a);x = (h4-h1L4a)./(h2V(valid4a)-h1L4a); % quality
+    v1L = v1_pT(p4a,Tsat4a); % [m^3/kg] saturated liquid specific volumes
+    v2V = v2_pT(p4a,Tsat4a); % [m^3/kg] saturated vapor specific volumes
+    T4abar = Tsat4a/Tc;v4 = v1L + x.*(v2V - v1L);rho4abar = 1./v4/rhoc;
+    mu0 = 100*sqrt(T4abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T4abar)./T4abar)./T4abar);
+    dmu0dT = mu0/2./T4abar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T4abar)./T4abar)./T4abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T4abar)./T4abar)./T4abar);
+    L = length(p4a);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T4abar = T4abar*ones(1,Nterms);rho4abar = rho4abar*ones(1,Nterms);
+    mu1 = exp(sum(rho4abar.*(1./T4abar-1).^I.*HIJ.*(rho4abar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho4abar.*I.*(1./T4abar-1).^(I-1).*(-1./T4abar.^2).*HIJ.*(rho4abar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T4abar-1).^I.*HIJ.*(rho4abar-1).^J,2) + sum(rho4abar.*(1./T4abar-1).^I.*J.*HIJ.*(rho4abar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudh(valid4a) = -dmudrho./v4.^2.*dvdh_ph(p4a,h4) + dmudT./cp_ph(p4a,h4);
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);
+    v3L = vL_p(p4b); v3V = vV_p(p4b);
+    h3L = h3_rhoT(1./v3L,Tsat4b);
+    h3V = h3_rhoT(1./v3V,Tsat4b);
+    h4 = h(valid4b);x = (h4-h3L)./(h3V-h3L); % quality
+    T4bbar = Tsat4b/Tc;v4 = v3L + x.*(v3V - v3L);rho4bbar = 1./v4/rhoc;
+    mu0 = 100*sqrt(T4bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T4bbar)./T4bbar)./T4bbar);
+    dmu0dT = mu0/2./T4bbar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T4bbar)./T4bbar)./T4bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T4bbar)./T4bbar)./T4bbar);
+    L = length(p4b);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T4bbar = T4bbar*ones(1,Nterms);rho4bbar = rho4bbar*ones(1,Nterms);
+    mu1 = exp(sum(rho4bbar.*(1./T4bbar-1).^I.*HIJ.*(rho4bbar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho4bbar.*I.*(1./T4bbar-1).^(I-1).*(-1./T4bbar.^2).*HIJ.*(rho4bbar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T4bbar-1).^I.*HIJ.*(rho4bbar-1).^J,2) + sum(rho4bbar.*(1./T4bbar-1).^I.*J.*HIJ.*(rho4bbar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudh(valid4b) = -dmudrho./v4.^2.*dvdh_ph(p4b,h4) + dmudT./cp_ph(p4b,h4);
+end
+end
+function dmudp = dmudp_ph(p,h)
+% dmudp = dmudp_ph(p,h)
+%   Derivative of viscosity, dmudp [(Pa*s)/MPa], with respect to pressure, p [MPa] at constant enthalpy as a function of
+%   pressure, p [MPa], and enthalpy, h [kJ/kg]
+% based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
+% Ausra, Inc.
+% June 23, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+initnan = NaN(dim);
+dmudp = initnan;
+%% constants and calculated
+Tc = 647.096; % [K]
+rhoc = 322.0; % [kg/m^3]
+mustar = 1.00e-6; % [Pa*s]
+Hi = [1.67752 2.20462 0.6366564 -0.241605];
+Hij = [0,1,2,3,0,1,2,3,5,0,1,2,3,4,0,1,0,3,4,3,5;0,0,0,0,1,1,1,1,1,2,2,2,2,2,3,3,4,4,5,6,6; ...
+    0.520094,0.0850895,-1.08374,-0.289555,0.222531,0.999115,1.88797,1.26613,0.120573,-0.281378,-0.906851,-0.772479, ...
+    -0.489837,-0.257040,0.161913,0.257399,-0.0325372,0.0698452,0.00872102,-0.00435673,-0.000593264];
+Nterms = 21;
+Tmin = 273.16; % [K] minimum temperature is triple point
+T2bcsat = 554.485; % [K] saturation temperature at 5.85 kJ/kg/K isentropic line between region 2b and 2c
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+Tmax = 1073.15; % [K] maximum temperature
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+p2ab = 4; % [MPa] pressure along boundary between region 2a and 2b
+p2bcsat = psat_T(T2bcsat); % [MPa] saturation pressure at 5.85 kJ/kg/K isentropic line between region 2b and 2c
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pmax = 100; % [MPa] maximum pressure
+h1B13L = h1_pT(pB13sat,TB13); % [kJ/kg] saturated liquid enthalpy at boundary between region 1, region 3 and region 4
+h2B13V = h2_pT(pB13sat,TB13); % [kJ/kg] saturated vapor enthalpy at boundary between region 2, region 3 and region 4
+%% calculated matrices
+Tsat = Tsat_p(p); % [K] saturation temperatures
+h1min = initnan;h2max = initnan;valid = p>=pmin & p<=pmax;pvalid = p(valid); % initialize matricies with NaN and set valid range of parameters
+if any(any(valid))
+    Tmin = Tmin*ones(dim);Tmax = Tmax*ones(dim); % copy to matrix of size dim
+    h1min(valid) = h1_pT(pvalid,Tmin(valid)); % [kJ/kg] minimum enthalpies
+    h2max(valid) = h2_pT(pvalid,Tmax(valid)); % [kJ/kg] maximum enthalpies in region 2
+end
+h1L = initnan;h2V = initnan;valid = p>=pmin & p<=pB13sat;pvalid = p(valid); % initialize matricies with NaN and set valid range of parameters
+if any(any(valid))
+    h1L(valid) = h1_pT(pvalid,Tsat(valid)); % [kJ/kg] saturated liquid enthalpies in region 1
+    h2V(valid) = h2_pT(pvalid,Tsat(valid)); % [kJ/kg] saturated vapor enthalpies in region 2
+end
+h1B13 = initnan;h3ab = initnan;h2B23 = initnan;valid = p>=pB13sat & p<=pmax;pvalid = p(valid); % initialize matricies with NaN and set valid range of parameters
+if any(any(valid))
+    TB13 = TB13*ones(dim); % copy to matrix of size dim
+    h1B13(valid) = h1_pT(pvalid,TB13(valid)); % [kJ/kg] enthalpies on boundary between region 1 and region 3
+    h3ab(valid) = h3ab_p(pvalid); % [kJ/kg] enthalpies on critical entropy isentropic line between regions 3a and region 3b
+    h2B23(valid) = h2_pT(pvalid,TB23_p(pvalid)); % [kJ/kg] enthalpies on boundary between region 2 and region 3
+end
+h2bc = initnan;valid = p>=p2bcsat & p<=pmax; % initialize matricies with NaN and set valid range of parameters
+h2bc(valid) = h2bc_p(p(valid)); % [kJ/kg] enthalpies on boundary between region 2b and 2c
+p3sat = pB13sat*ones(dim);valid = h>=h1B13L & h<=h2B13V; % % do NOT use NaN to initialize p3sat, b/c for h<h1B13L or h>h2B13V p>NaN = 0, instead use pB13sat
+if any(any(valid))
+    p3sat(valid) = p3sat_h(h(valid)); % [MPa] saturation pressure on boundary between region 3 and 4
+end
+%% valid ranges
+valid1 = (p>=pmin & p<=pB13sat & h>=h1min & h<=h1L) | (p>pB13sat & p<=pmax & h>=h1min & h<=h1B13); % valid range for region 1
+valid2a = p>=pmin & p<=p2ab & h>h2V & h<=h2max; % valid range for region 2a
+valid2b = (p>p2ab & p<=p2bcsat & h>h2V & h<=h2max) | (p>p2bcsat & p<=pmax & h>h2bc & h<=h2max); % valid range for region 2b
+valid2c = (p>p2bcsat & p<=pB13sat & h>h2V & h<=h2bc) | (p>pB13sat & p<=pmax & h>h2B23 & h<=h2bc); % valid range for region 2c
+valid3a = p>p3sat & p<=pmax & h>h1B13 & h<=h3ab; % valid range for region 3a
+valid3b = p>p3sat & p<=pmax & h>h3ab & h<=h2B23; % valid range for region 3b
+valid4a = p>=pmin & p<=pB13sat & h>h1L & h<=h2V; % valid range for region 4a
+valid4b = p>pB13sat & p<=p3sat & h>h1B13L & h<=h2B13V; % valid range for region 4b
+if any(any(valid1))
+    p1 = p(valid1);h1 = h(valid1);T1 = T1_ph(p1,h1);v1 = v1_pT(p1,T1);rho1bar = 1./v1/rhoc;T1bar = T1/Tc;
+    mu0 = 100*sqrt(T1bar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T1bar)./T1bar)./T1bar);
+    dmu0dT = mu0/2./T1bar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T1bar)./T1bar)./T1bar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T1bar)./T1bar)./T1bar);
+    L = length(p1);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T1bar = T1bar*ones(1,Nterms);rho1bar = rho1bar*ones(1,Nterms);
+    mu1 = exp(sum(rho1bar.*(1./T1bar-1).^I.*HIJ.*(rho1bar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho1bar.*I.*(1./T1bar-1).^(I-1).*(-1./T1bar.^2).*HIJ.*(rho1bar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T1bar-1).^I.*HIJ.*(rho1bar-1).^J,2) + sum(rho1bar.*(1./T1bar-1).^I.*J.*HIJ.*(rho1bar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudp(valid1) = -dmudrho./v1.^2.*dvdp_ph(p1,h1) + dmudT.*dTdp_ph(p1,h1);
+end
+if any(any(valid2a))
+    p2a = p(valid2a);h2 = h(valid2a);T2a = T2a_ph(p2a,h2);v2 = v2_pT(p2a,T2a);rho2abar = 1./v2/rhoc;T2abar = T2a/Tc;
+    mu0 = 100*sqrt(T2abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2abar)./T2abar)./T2abar);
+    dmu0dT = mu0/2./T2abar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T2abar)./T2abar)./T2abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2abar)./T2abar)./T2abar);
+    L = length(p2a);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T2abar = T2abar*ones(1,Nterms);rho2abar = rho2abar*ones(1,Nterms);
+    mu1 = exp(sum(rho2abar.*(1./T2abar-1).^I.*HIJ.*(rho2abar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho2abar.*I.*(1./T2abar-1).^(I-1).*(-1./T2abar.^2).*HIJ.*(rho2abar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T2abar-1).^I.*HIJ.*(rho2abar-1).^J,2) + sum(rho2abar.*(1./T2abar-1).^I.*J.*HIJ.*(rho2abar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudp(valid2a) = -dmudrho./v2.^2.*dvdp_ph(p2a,h2) + dmudT.*dTdp_ph(p2a,h2);
+end
+if any(any(valid2b))
+    p2b = p(valid2b);h2 = h(valid2b);T2b = T2b_ph(p2b,h2);v2 = v2_pT(p2b,T2b);rho2bbar = 1./v2/rhoc;T2bbar = T2b/Tc;
+    mu0 = 100*sqrt(T2bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2bbar)./T2bbar)./T2bbar);
+    dmu0dT = mu0/2./T2bbar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T2bbar)./T2bbar)./T2bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2bbar)./T2bbar)./T2bbar);
+    L = length(p2b);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T2bbar = T2bbar*ones(1,Nterms);rho2bbar = rho2bbar*ones(1,Nterms);
+    mu1 = exp(sum(rho2bbar.*(1./T2bbar-1).^I.*HIJ.*(rho2bbar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho2bbar.*I.*(1./T2bbar-1).^(I-1).*(-1./T2bbar.^2).*HIJ.*(rho2bbar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T2bbar-1).^I.*HIJ.*(rho2bbar-1).^J,2) + sum(rho2bbar.*(1./T2bbar-1).^I.*J.*HIJ.*(rho2bbar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudp(valid2b) = -dmudrho./v2.^2.*dvdp_ph(p2b,h2) + dmudT.*dTdp_ph(p2b,h2);
+end
+if any(any(valid2c))
+    p2c = p(valid2c);h2 = h(valid2c);T2c = T2c_ph(p2c,h2);v2 = v2_pT(p2c,T2c);rho2cbar = 1./v2/rhoc;T2cbar = T2c/Tc;
+    mu0 = 100*sqrt(T2cbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2cbar)./T2cbar)./T2cbar);
+    dmu0dT = mu0/2./T2cbar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T2cbar)./T2cbar)./T2cbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T2cbar)./T2cbar)./T2cbar);
+    L = length(p2c);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T2cbar = T2cbar*ones(1,Nterms);rho2cbar = rho2cbar*ones(1,Nterms);
+    mu1 = exp(sum(rho2cbar.*(1./T2cbar-1).^I.*HIJ.*(rho2cbar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho2cbar.*I.*(1./T2cbar-1).^(I-1).*(-1./T2cbar.^2).*HIJ.*(rho2cbar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T2cbar-1).^I.*HIJ.*(rho2cbar-1).^J,2) + sum(rho2cbar.*(1./T2cbar-1).^I.*J.*HIJ.*(rho2cbar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudp(valid2c) = -dmudrho./v2.^2.*dvdp_ph(p2c,h2) + dmudT.*dTdp_ph(p2c,h2);
+end
+if any(any(valid3a))
+    p3a = p(valid3a);h3a = h(valid3a);T3 = T3a_ph(p3a,h3a);T3abar = T3/Tc;v3 = v3a_ph(p3a,h3a);rho3abar = 1./v3/rhoc;
+    mu0 = 100*sqrt(T3abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T3abar)./T3abar)./T3abar);
+    dmu0dT = mu0/2./T3abar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T3abar)./T3abar)./T3abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T3abar)./T3abar)./T3abar);
+    L = length(p3a);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T3abar = T3abar*ones(1,Nterms);rho3abar = rho3abar*ones(1,Nterms);
+    mu1 = exp(sum(rho3abar.*(1./T3abar-1).^I.*HIJ.*(rho3abar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho3abar.*I.*(1./T3abar-1).^(I-1).*(-1./T3abar.^2).*HIJ.*(rho3abar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T3abar-1).^I.*HIJ.*(rho3abar-1).^J,2) + sum(rho3abar.*(1./T3abar-1).^I.*J.*HIJ.*(rho3abar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudp(valid3a) = -dmudrho./v3.^2.*dvdp_ph(p3a,h3a) + dmudT.*dTdp_ph(p3a,h3a);
+end
+if any(any(valid3b))
+    p3b = p(valid3b);h3b = h(valid3b);T3 = T3b_ph(p3b,h3b);T3bbar = T3/Tc;v3 = v3b_ph(p3b,h3b);rho3bbar = 1./v3/rhoc;
+    mu0 = 100*sqrt(T3bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T3bbar)./T3bbar)./T3bbar);
+    dmu0dT = mu0/2./T3bbar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T3bbar)./T3bbar)./T3bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T3bbar)./T3bbar)./T3bbar);
+    L = length(p3b);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T3bbar = T3bbar*ones(1,Nterms);rho3bbar = rho3bbar*ones(1,Nterms);
+    mu1 = exp(sum(rho3bbar.*(1./T3bbar-1).^I.*HIJ.*(rho3bbar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho3bbar.*I.*(1./T3bbar-1).^(I-1).*(-1./T3bbar.^2).*HIJ.*(rho3bbar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T3bbar-1).^I.*HIJ.*(rho3bbar-1).^J,2) + sum(rho3bbar.*(1./T3bbar-1).^I.*J.*HIJ.*(rho3bbar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudp(valid3b) = -dmudrho./v3.^2.*dvdp_ph(p3b,h3b) + dmudT.*dTdp_ph(p3b,h3b);
+end
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);h1L4a = h1L(valid4a);
+    h4 = h(valid4a);x = (h4-h1L4a)./(h2V(valid4a)-h1L4a); % quality
+    v1L = v1_pT(p4a,Tsat4a); % [m^3/kg] saturated liquid specific volumes
+    v2V = v2_pT(p4a,Tsat4a); % [m^3/kg] saturated vapor specific volumes
+    T4abar = Tsat4a/Tc;v4 = v1L + x.*(v2V - v1L);rho4abar = 1./v4/rhoc;
+    mu0 = 100*sqrt(T4abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T4abar)./T4abar)./T4abar);
+    dmu0dT = mu0/2./T4abar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T4abar)./T4abar)./T4abar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T4abar)./T4abar)./T4abar);
+    L = length(p4a);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T4abar = T4abar*ones(1,Nterms);rho4abar = rho4abar*ones(1,Nterms);
+    mu1 = exp(sum(rho4abar.*(1./T4abar-1).^I.*HIJ.*(rho4abar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho4abar.*I.*(1./T4abar-1).^(I-1).*(-1./T4abar.^2).*HIJ.*(rho4abar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T4abar-1).^I.*HIJ.*(rho4abar-1).^J,2) + sum(rho4abar.*(1./T4abar-1).^I.*J.*HIJ.*(rho4abar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudp(valid4a) = -dmudrho./v4.^2.*dvdp_ph(p4a,h4) + dmudT.*dTdp_ph(p4a,h4);
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);
+    v3L = vL_p(p4b); v3V = vV_p(p4b);
+    h3L = h3_rhoT(1./v3L,Tsat4b);
+    h3V = h3_rhoT(1./v3V,Tsat4b);
+    h4 = h(valid4b);x = (h4-h3L)./(h3V-h3L); % quality
+    T4bbar = Tsat4b/Tc;v4 = v3L + x.*(v3V - v3L);rho4bbar = 1./v4/rhoc;
+    mu0 = 100*sqrt(T4bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T4bbar)./T4bbar)./T4bbar);
+    dmu0dT = mu0/2./T4bbar.*(Hi(1) + (3*Hi(2) + (5*Hi(3) + 7*Hi(4)./T4bbar)./T4bbar)./T4bbar)./(Hi(1) + (Hi(2) + (Hi(3) + Hi(4)./T4bbar)./T4bbar)./T4bbar);
+    L = length(p4b);I = ones(L,1)*Hij(1,:);J = ones(L,1)*Hij(2,:);HIJ = ones(L,1)*Hij(3,:);
+    T4bbar = T4bbar*ones(1,Nterms);rho4bbar = rho4bbar*ones(1,Nterms);
+    mu1 = exp(sum(rho4bbar.*(1./T4bbar-1).^I.*HIJ.*(rho4bbar-1).^J,2));
+    dmu1dT = mu1.*(sum(rho4bbar.*I.*(1./T4bbar-1).^(I-1).*(-1./T4bbar.^2).*HIJ.*(rho4bbar-1).^J,2));
+    dmudT = (dmu0dT.*mu1 + mu0.*dmu1dT)*mustar/Tc;
+    dmu1drho = mu1.*(sum((1./T4bbar-1).^I.*HIJ.*(rho4bbar-1).^J,2) + sum(rho4bbar.*(1./T4bbar-1).^I.*J.*HIJ.*(rho4bbar-1).^(J-1),2));
+    dmudrho = mu0.*dmu1drho*mustar/rhoc;
+    dmudp(valid4b) = -dmudrho./v4.^2.*dvdp_ph(p4b,h4) + dmudT.*dTdp_ph(p4b,h4);
 end
 end
 function dhLdp = dhLdp_p(p) 

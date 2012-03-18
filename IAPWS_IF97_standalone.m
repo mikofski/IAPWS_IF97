@@ -395,66 +395,6 @@ if any(any(valid3))
     mu(valid3) = mu0.*mu1*mustar;
 end
 end
-function dhLdp = dhLdp_p(p) 
-% dhLdp = dhLdp_ph(p)
-%   Derivative of enthalpy wrt pressure of saturated liquid, dhLdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
-% based on IAPWS-IF97
-% Ausra, Inc.
-% June 16, 2009
-% Mark Mikofski
-%% size of inputs
-dim = size(p);
-dhLdp = NaN(dim);
-%% constants and calculated
-conversion_factor = 1e-3; % [MPa/(kJ/m^3)]
-Tmin = 273.16; % [K] minimum temperature is triple point
-TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
-pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
-pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
-pc = 22.064; % [MPa] critical pressure
-Tsat = Tsat_p(p); % [K] saturation temperatures
-%% valid ranges
-valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
-valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
-if any(any(valid4a))
-    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
-    dhLdp(valid4a) = v1_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav1_pT(p4a,Tsat4a))/conversion_factor + cp1_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
-end
-if any(any(valid4b))
-    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);
-    dhLdp(valid4b) = (v3L - Tsat4b.*alphap3L./betap3_rhoT(rho3L,Tsat4b).*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
-end
-end
-function dhVdp = dhVdp_p(p) 
-% dhVdp = dhVdp_ph(p)
-%   Derivative of enthalpy wrt pressure of saturated vapor, dhVdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
-% based on IAPWS-IF97
-% Ausra, Inc.
-% June 16, 2009
-% Mark Mikofski
-%% size of inputs
-dim = size(p);
-dhVdp = NaN(dim);
-%% constants and calculated
-conversion_factor = 1e-3; % [MPa/(kJ/m^3)]
-Tmin = 273.16; % [K] minimum temperature is triple point
-TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
-pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
-pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
-pc = 22.064; % [MPa] critical pressure
-Tsat = Tsat_p(p); % [K] saturation temperatures
-%% valid ranges
-valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
-valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
-if any(any(valid4a))
-    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
-    dhVdp(valid4a) = v2_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav2_pT(p4a,Tsat4a))/conversion_factor + cp2_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
-end
-if any(any(valid4b))
-    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3V = vV_p(p4b);rho3V = 1./v3V;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);
-    dhVdp(valid4b) = (v3V - Tsat4b.*alphap3V./betap3_rhoT(rho3V,Tsat4b).*(1 + p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3V,Tsat4b).*dTsatdpsat4b;
-end
-end
 function dmudh = dmudh_ph(p,h)
 % dmudh = dmudh_ph(p,h)
 %   Derivative of viscosity, dmudh [(Pa*s)/(kJ/kg)], with respect to enthalpy, h [kJ/kg] at constant pressure as a function of
@@ -815,6 +755,66 @@ if any(any(valid4b))
     dmu1drho = mu1.*(sum((1./T4bbar-1).^I.*HIJ.*(rho4bbar-1).^J,2) + sum(rho4bbar.*(1./T4bbar-1).^I.*J.*HIJ.*(rho4bbar-1).^(J-1),2));
     dmudrho = mu0.*dmu1drho*mustar/rhoc;
     dmudp(valid4b) = -dmudrho./v4.^2.*dvdp_ph(p4b,h4) + dmudT.*dTdp_ph(p4b,h4);
+end
+end
+function dhLdp = dhLdp_p(p) 
+% dhLdp = dhLdp_ph(p)
+%   Derivative of enthalpy wrt pressure of saturated liquid, dhLdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
+% based on IAPWS-IF97
+% Ausra, Inc.
+% June 16, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+dhLdp = NaN(dim);
+%% constants and calculated
+conversion_factor = 1e-3; % [MPa/(kJ/m^3)]
+Tmin = 273.16; % [K] minimum temperature is triple point
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pc = 22.064; % [MPa] critical pressure
+Tsat = Tsat_p(p); % [K] saturation temperatures
+%% valid ranges
+valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
+valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
+    dhLdp(valid4a) = v1_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav1_pT(p4a,Tsat4a))/conversion_factor + cp1_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);
+    dhLdp(valid4b) = (v3L - Tsat4b.*alphap3L./betap3_rhoT(rho3L,Tsat4b).*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
+end
+end
+function dhVdp = dhVdp_p(p) 
+% dhVdp = dhVdp_ph(p)
+%   Derivative of enthalpy wrt pressure of saturated vapor, dhVdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
+% based on IAPWS-IF97
+% Ausra, Inc.
+% June 16, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+dhVdp = NaN(dim);
+%% constants and calculated
+conversion_factor = 1e-3; % [MPa/(kJ/m^3)]
+Tmin = 273.16; % [K] minimum temperature is triple point
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pc = 22.064; % [MPa] critical pressure
+Tsat = Tsat_p(p); % [K] saturation temperatures
+%% valid ranges
+valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
+valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
+    dhVdp(valid4a) = v2_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav2_pT(p4a,Tsat4a))/conversion_factor + cp2_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3V = vV_p(p4b);rho3V = 1./v3V;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);
+    dhVdp(valid4b) = (v3V - Tsat4b.*alphap3V./betap3_rhoT(rho3V,Tsat4b).*(1 + p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3V,Tsat4b).*dTsatdpsat4b;
 end
 end
 function dvdp = dvdp_ph(p,h)
