@@ -1,1 +1,6 @@
 *.asv
+*.fig
+*.png
+*.html
+/html
+*.pdf
