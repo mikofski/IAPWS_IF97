@@ -1,5 +1,5 @@
 %% IAPWS-IF97 stand alone functions
-function k = k_pT(p,T) 
+function k = k_pT(p,T)
 % k = k_pT(p,T)
 %   thermal conductivity, k [W/m/K], as a function of pressure, p [MPa], and temperature, T [K]
 % based on Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance, 2008
@@ -337,7 +337,7 @@ if any(any(valid4b))
     mu(valid4b) = mu0.*mu1*mustar;
 end
 end
-function mu = mu_pT(p,T) 
+function mu = mu_pT(p,T)
 % mu = mu_pT(p,T)
 %   Viscosity, mu [Pa*s], as a function of pressure, p [MPa], and temperature, T [K]
 % based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
@@ -757,7 +757,7 @@ if any(any(valid4b))
     dmudp(valid4b) = -dmudrho./v4.^2.*dvdp_ph(p4b,h4) + dmudT.*dTdp_ph(p4b,h4);
 end
 end
-function dhLdp = dhLdp_p(p) 
+function dhLdp = dhLdp_p(p)
 % dhLdp = dhLdp_ph(p)
 %   Derivative of enthalpy wrt pressure of saturated liquid, dhLdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
@@ -787,7 +787,7 @@ if any(any(valid4b))
     dhLdp(valid4b) = (v3L - Tsat4b.*alphap3L./betap3_rhoT(rho3L,Tsat4b).*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
 end
 end
-function dhVdp = dhVdp_p(p) 
+function dhVdp = dhVdp_p(p)
 % dhVdp = dhVdp_ph(p)
 %   Derivative of enthalpy wrt pressure of saturated vapor, dhVdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
@@ -912,7 +912,7 @@ if any(any(valid4a))
     dhLdp = vL4a.*(1-Tsat4a.*alphavL4a)/conversion_factor + cp1_pT(p4a,Tsat4a).*dTsatdpsat4a; % [(kJ/kg)/MPa]
     dhVdp = vV4a.*(1-Tsat4a.*alphavV4a)/conversion_factor + cp2_pT(p4a,Tsat4a).*dTsatdpsat4a; % [(kJ/kg)/MPa]
     hfg = hV4a-hL4a;%vfg = vV4a-vL4a;
-%     dvdp(valid4a) = dvLdp + ((h(valid4a)-hL4a).*((dvVdp-dvLdp) - (dhVdp-dhLdp).*vfg./hfg) - dhLdp.*vfg)./hfg;
+    %     dvdp(valid4a) = dvLdp + ((h(valid4a)-hL4a).*((dvVdp-dvLdp) - (dhVdp-dhLdp).*vfg./hfg) - dhLdp.*vfg)./hfg;
     % 3/30/10 calculate void fraction from Zivi (1964) drift-flux correlation
     x = (h(valid4a)-hL4a)./hfg;
     temp1 = (1-x)./x; temp2 = (vL4a./vV4a).^slip;
@@ -932,7 +932,7 @@ if any(any(valid4b))
     dhLdp = (v3L - Tsat4b.*alphap3L./betap3L.*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
     dhVdp = (v3V - Tsat4b.*alphap3V./betap3V.*(1 + p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3V,Tsat4b).*dTsatdpsat4b;
     hfg = h3V-h3L;%vfg = v3V-v3L;
-%     dvdp(valid4b) = dvLdp + ((h(valid4b)-h3L).*((dvVdp-dvLdp) - (dhVdp-dhLdp).*vfg./hfg) - dhLdp.*vfg)./hfg;
+    %     dvdp(valid4b) = dvLdp + ((h(valid4b)-h3L).*((dvVdp-dvLdp) - (dhVdp-dhLdp).*vfg./hfg) - dhLdp.*vfg)./hfg;
     % 3/30/10 calculate void fraction from Zivi (1964) drift-flux correlation
     x = (h(valid4b)-h3L)./hfg;
     temp1 = (1-x)./x; temp2 = (v3L./v3V).^slip;
@@ -1033,7 +1033,7 @@ if any(any(valid3b))
 end
 if any(any(valid4a))
     p4a = p(valid4a);Tsat4a = Tsat(valid4a);
-%     dvdh(valid4a) = (v2_pT(p4a,Tsat4a) - v1_pT(p4a,Tsat4a))./(h2V(valid4a)-h1L(valid4a));
+    %     dvdh(valid4a) = (v2_pT(p4a,Tsat4a) - v1_pT(p4a,Tsat4a))./(h2V(valid4a)-h1L(valid4a));
     % 4/5/10 calculate void fraction from Zivi (1964) drift-flux correlation
     vL4a = v1_pT(p4a,Tsat4a);vV4a = v2_pT(p4a,Tsat4a);
     hL4a = h1_pT(p4a,Tsat4a);hV4a = h2_pT(p4a,Tsat4a);
@@ -1049,7 +1049,7 @@ if any(any(valid4b))
     v3L = vL_p(p4b); v3V = vV_p(p4b);
     h3L = h3_rhoT(1./v3L,Tsat4b);
     h3V = h3_rhoT(1./v3V,Tsat4b);
-%     dvdh(valid4b) = (v3V - v3L)./(h3V-h3L);
+    %     dvdh(valid4b) = (v3V - v3L)./(h3V-h3L);
     % 4/5/10 calculate void fraction from Zivi (1964) drift-flux correlation
     hfg = h3V-h3L;
     x = (h(valid4b)-h3L)./hfg;
@@ -1769,7 +1769,7 @@ if any(any(valid4a))
     x = (h(valid4a)-h1L4a)./(h2V(valid4a)-h1L4a); % quality
     v1L = v1_pT(p4a,Tsat4a); % [m^3/kg] saturated liquid specific volumes
     v2V = v2_pT(p4a,Tsat4a); % [m^3/kg] saturated vapor specific volumes
-%     v(valid4a) = v1L + x.*(v2V - v1L);
+    %     v(valid4a) = v1L + x.*(v2V - v1L);
     % 3/30/10 calculate void fraction from Zivi (1964) drift-flux correlation
     alpha = 1./(1+(1-x)./x.*(v1L./v2V).^slip);
     v(valid4a) = 1./((1-alpha)./v1L + alpha./v2V);
@@ -1780,7 +1780,7 @@ if any(any(valid4b))
     h3L = h3_rhoT(1./v3L,Tsat4b);
     h3V = h3_rhoT(1./v3V,Tsat4b);
     x = (h(valid4b)-h3L)./(h3V-h3L); % quality
-%     v(valid4b) = v3L + x.*(v3V - v3L);
+    %     v(valid4b) = v3L + x.*(v3V - v3L);
     % 3/30/10 calculate void fraction from Zivi (1964) drift-flux correlation
     alpha = 1./(1+(1-x)./x.*(v3L./v3V).^slip);
     v(valid4b) = 1./((1-alpha)./v3L + alpha./v3V);

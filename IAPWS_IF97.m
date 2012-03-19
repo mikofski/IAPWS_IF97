@@ -44,7 +44,7 @@ if nargin==3
 end
 end
 %% stand alone functions
-function k = k_pT(p,T) 
+function k = k_pT(p,T)
 % k = k_pT(p,T)
 %   thermal conductivity, k [W/m/K], as a function of pressure, p [MPa], and temperature, T [K]
 % based on Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance, 2008
@@ -102,7 +102,7 @@ if any(any(valid3))
     k(valid3) = (k0+k1+k2)*kstar;
 end
 end
-function k = k_ph(p,h) 
+function k = k_ph(p,h)
 % k = k_ph(p,h)
 %   thermal conductivity, k [W/m/K], as a function of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance, 2008
@@ -242,7 +242,7 @@ if any(any(valid4b))
     k(valid4b) = (k0+k1+k2)*kstar;
 end
 end
-function mu = mu_ph(p,h) 
+function mu = mu_ph(p,h)
 % mu = mu_ph(p,h)
 %   Viscosity, mu [Pa*s], as a function of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
@@ -382,7 +382,7 @@ if any(any(valid4b))
     mu(valid4b) = mu0.*mu1*mustar;
 end
 end
-function mu = mu_pT(p,T) 
+function mu = mu_pT(p,T)
 % mu = mu_pT(p,T)
 %   Viscosity, mu [Pa*s], as a function of pressure, p [MPa], and temperature, T [K]
 % based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
@@ -802,7 +802,7 @@ if any(any(valid4b))
     dmudp(valid4b) = -dmudrho./v4.^2.*dvdp_ph(p4b,h4) + dmudT.*dTdp_ph(p4b,h4);
 end
 end
-function dhLdp = dhLdp_p(p) 
+function dhLdp = dhLdp_p(p)
 % dhLdp = dhLdp_ph(p)
 %   Derivative of enthalpy wrt pressure of saturated liquid, dhLdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
@@ -832,7 +832,7 @@ if any(any(valid4b))
     dhLdp(valid4b) = (v3L - Tsat4b.*alphap3L./betap3_rhoT(rho3L,Tsat4b).*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
 end
 end
-function dhVdp = dhVdp_p(p) 
+function dhVdp = dhVdp_p(p)
 % dhVdp = dhVdp_ph(p)
 %   Derivative of enthalpy wrt pressure of saturated vapor, dhVdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
@@ -862,7 +862,7 @@ if any(any(valid4b))
     dhVdp(valid4b) = (v3V - Tsat4b.*alphap3V./betap3_rhoT(rho3V,Tsat4b).*(1 + p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3V,Tsat4b).*dTsatdpsat4b;
 end
 end
-function dvdp = dvdp_ph(p,h) 
+function dvdp = dvdp_ph(p,h)
 % dvdp = dvdp_ph(p,h)
 %   Derivative of specific volume wrt pressure at constant enthalpy of liquid, vapor or mixture, dvdp [m^3/kg/MPa], as
 %   functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
@@ -970,7 +970,7 @@ if any(any(valid4b))
     dvdp(valid4b) = dvLdp + ((h(valid4b)-h3L).*((dvVdp-dvLdp) - (dhVdp-dhLdp).*vfg./hfg) - dhLdp.*vfg)./hfg;
 end
 end
-function dvdh = dvdh_ph(p,h) 
+function dvdh = dvdh_ph(p,h)
 % dvdh = dvdh_ph(p,h)
 %   Derivative of specific volume wrt enthalpy at constant pressure of liquid, vapor or mixture, dvdh [(m^3/kg)/(kJ/kg)],
 %   as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
@@ -1068,7 +1068,7 @@ if any(any(valid4b))
     dvdh(valid4b) = (v3V - v3L)./(h3V-h3L);
 end
 end
-function dTdp = dTdp_ph(p,h) 
+function dTdp = dTdp_ph(p,h)
 % dTdp = dTdp_ph(p,h)
 %   Derivative of temperature wrt pressure at constant enthalpy of liquid, vapor or mixture, dTdp [K/MPa], as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
@@ -1156,7 +1156,7 @@ if any(any(valid4))
     dTdp(valid4) = dTsatdpsat_p(p(valid4));
 end
 end
-function cp = cp_ph(p,h) 
+function cp = cp_ph(p,h)
 % cp = cp_ph(p,h)
 %   Specific heat at constant pressure of liquid, vapor or mixture, cp [kJ/kg/K], as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
@@ -1241,7 +1241,7 @@ if any(any(valid4))
     cp(valid4) = Inf;
 end
 end
-function h = h_pT(p,T) 
+function h = h_pT(p,T)
 % h = h_pT(p,T)
 %   Enthalpy, h [kJ/kg], as a function of pressure, p [MPa], and temperature, T [K]
 % based on IAPWS-IF97
@@ -1559,7 +1559,7 @@ if any(any(valid4b))
     end
 end
 end
-function h = hL_p(p) 
+function h = hL_p(p)
 % h = hL_p(p)
 %   Enthalpy of saturated liquid, h [kJ/kg], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
@@ -1586,7 +1586,7 @@ if any(any(valid4b))
     h(valid4b) = h3_rhoT(1./vL_p(p(valid4b)),Tsat(valid4b));
 end
 end
-function h = hV_p(p) 
+function h = hV_p(p)
 % h = hV_p(p)
 %   Enthalpy of saturated vapor, h [kJ/kg], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
@@ -1613,7 +1613,7 @@ if any(any(valid4b))
     h(valid4b) = h3_rhoT(1./vV_p(p(valid4b)),Tsat(valid4b));
 end
 end
-function T = T_ph(p,h) 
+function T = T_ph(p,h)
 % T = T_ph(p,h)
 %   Temperature of liquid, vapor or mixture, T [K], as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
@@ -1692,7 +1692,7 @@ if any(any(valid4))
     T(valid4) = Tsat(valid4);
 end
 end
-function v = v_ph(p,h)  
+function v = v_ph(p,h)
 % v = v_ph(p,h)
 %   Specific volume of liquid, vapor or mixture, v [m^3/kg], as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
