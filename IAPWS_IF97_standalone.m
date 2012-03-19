@@ -3,7 +3,7 @@ function k = k_pT(p,T)
 % k = k_pT(p,T)
 %   thermal conductivity, k [W/m/K], as a function of pressure, p [MPa], and temperature, T [K]
 % based on Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance, 2008
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 23, 2009
 % Mark Mikofski
 %% size of inputs
@@ -61,7 +61,7 @@ function k = k_ph(p,h)
 % k = k_ph(p,h)
 %   thermal conductivity, k [W/m/K], as a function of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance, 2008
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 23, 2009
 % Mark Mikofski
 %% size of inputs
@@ -201,7 +201,7 @@ function mu = mu_ph(p,h)
 % mu = mu_ph(p,h)
 %   Viscosity, mu [Pa*s], as a function of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 23, 2009
 % Mark Mikofski
 %% size of inputs
@@ -341,7 +341,7 @@ function mu = mu_pT(p,T)
 % mu = mu_pT(p,T)
 %   Viscosity, mu [Pa*s], as a function of pressure, p [MPa], and temperature, T [K]
 % based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 23, 2009
 % Mark Mikofski
 %% size of inputs
@@ -400,7 +400,7 @@ function dmudh = dmudh_ph(p,h)
 %   Derivative of viscosity, dmudh [(Pa*s)/(kJ/kg)], with respect to enthalpy, h [kJ/kg] at constant pressure as a function of
 %   pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 23, 2009
 % Mark Mikofski
 %% size of inputs
@@ -581,7 +581,7 @@ function dmudp = dmudp_ph(p,h)
 %   Derivative of viscosity, dmudp [(Pa*s)/MPa], with respect to pressure, p [MPa] at constant enthalpy as a function of
 %   pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS95 Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 23, 2009
 % Mark Mikofski
 %% size of inputs
@@ -761,7 +761,7 @@ function dhLdp = dhLdp_p(p)
 % dhLdp = dhLdp_ph(p)
 %   Derivative of enthalpy wrt pressure of saturated liquid, dhLdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 16, 2009
 % Mark Mikofski
 %% size of inputs
@@ -791,7 +791,7 @@ function dhVdp = dhVdp_p(p)
 % dhVdp = dhVdp_ph(p)
 %   Derivative of enthalpy wrt pressure of saturated vapor, dhVdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 16, 2009
 % Mark Mikofski
 %% size of inputs
@@ -822,7 +822,7 @@ function dvdp = dvdp_ph(p,h)
 %   Derivative of specific volume wrt pressure at constant enthalpy of liquid, vapor or mixture, dvdp [m^3/kg/MPa], as
 %   functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 10, 2009
 % Mark Mikofski
 %% size of inputs
@@ -949,7 +949,7 @@ function dvdh = dvdh_ph(p,h)
 %   Derivative of specific volume wrt enthalpy at constant pressure of liquid, vapor or mixture, dvdh [(m^3/kg)/(kJ/kg)],
 %   as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 10, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1063,7 +1063,7 @@ function dTdp = dTdp_ph(p,h)
 % dTdp = dTdp_ph(p,h)
 %   Derivative of temperature wrt pressure at constant enthalpy of liquid, vapor or mixture, dTdp [K/MPa], as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 10, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1151,7 +1151,7 @@ function cp = cp_ph(p,h)
 % cp = cp_ph(p,h)
 %   Specific heat at constant pressure of liquid, vapor or mixture, cp [kJ/kg/K], as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 9, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1236,7 +1236,7 @@ function h = h_pT(p,T)
 % h = h_pT(p,T)
 %   Enthalpy, h [kJ/kg], as a function of pressure, p [MPa], and temperature, T [K]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 9, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1272,7 +1272,7 @@ function v = v_pT(p,T)
 % v = v_pT(p,T)
 %   Specific volume, v [m^3/kg], as a function of pressure, p [MPa], and temperature, T [K]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 8, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1465,7 +1465,7 @@ function v = vL_p(p)
 % v = vL_p(p)
 %   Specific volume of saturated liquid, v [m^3/kg], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 5, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1510,7 +1510,7 @@ function v = vV_p(p)
 % v = vV_p(p)
 %   Specific volume of saturated vapor, v [m^3/kg], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 5, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1554,7 +1554,7 @@ function h = hL_p(p)
 % h = hL_p(p)
 %   Enthalpy of saturated liquid, h [kJ/kg], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 2, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1581,7 +1581,7 @@ function h = hV_p(p)
 % h = hV_p(p)
 %   Enthalpy of saturated vapor, h [kJ/kg], as a function of pressure, p [MPa]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 2, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1608,7 +1608,7 @@ function T = T_ph(p,h)
 % T = T_ph(p,h)
 %   Temperature of liquid, vapor or mixture, T [K], as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 2, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1687,7 +1687,7 @@ function v = v_ph(p,h)
 % v = v_ph(p,h)
 %   Specific volume of liquid, vapor or mixture, v [m^3/kg], as functions of pressure, p [MPa], and enthalpy, h [kJ/kg]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 1, 2009
 % Mark Mikofski
 %% size of inputs
@@ -1790,7 +1790,7 @@ function p = psat_T(T)
 % p = psat_T(T)
 %   Pressure of saturated liquid, mixture or steam, p [MPa], as a function of temperature, T [K]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 9, 2009
 % Mark Mikofski
 dim = size(T);
@@ -1813,7 +1813,7 @@ function T = Tsat_p(p)
 % T = Tsat_p(p)
 %   Temperature of saturated liquid, mixture or steam, T [K], as a function of temperature, p [MPa]
 % based on IAPWS-IF97
-% Ausra, Inc.
+% Reference: http://www.iapws.org/
 % June 9, 2009
 % Mark Mikofski
 dim = size(p);
