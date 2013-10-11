@@ -1,28 +1,95 @@
 function out = IAPWS_IF97(fun,in1,in2)
-% IAPWS_IF97(fun,in1,in2)
-%   102 water functions of water properties, based on the International Association on Properties of Water and Steam
-%   Industrial Formulation 1997 (IAPWS-IF97), IAPWS-IF97-S01, IAPWS-IF97-S03rev, IAPWS-IF97-S04, IAPWS-IF97-S05, Revised
-%   Advisory Note No. 3 Thermodynamic Derivatives from IAPWS Formulations 2008, Release on the IAPWS Formulation 2008
-%   for the Viscosity of Ordinary Water Substance, 2008 Revised Release on the IAPWS Formulation 1985 for the Thermal
-%   Conductivity of Ordinary Water Substance.
+% IAPWS_IF97(FUN,IN1,IN2)
+%   27 basic water functions of water properties, based on the International
+%   Association on Properties of Water and Steam Industrial Formulation 1997
+%   (IAPWS-IF97), IAPWS-IF97-S01, IAPWS-IF97-S03rev, IAPWS-IF97-S04,
+%   IAPWS-IF97-S05, Revised Advisory Note No. 3 Thermodynamic Derivatives from
+%   IAPWS Formulations 2008, Release on the IAPWS Formulation 2008 for the
+%   Viscosity of Ordinary Water Substance, 2008 Revised Release on the IAPWS
+%   Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance.
 %
-%   fun is the desired function that may take 1 input, in1, or 2 inputs, in1 and in2. in1 and in2 should be scalar,
-%   column vector or matrix, and in1 and in2 should be the same size. If a row vector is entered, it is transposed. If a
-%   scalar is entered for one input and the other input is a vector or matrix, then the scalar is repeated to form a
-%   vector or matrix of the same size as the other input.
-if nargin<2, out = NaN; return, end
-if ~any(strcmpi(fun,{'k_pT','k_ph','mu_pT','mu_ph','dmudh_ph','dmudp_ph','dhLdp_p','dhVdp_p','dvdp_ph','dvdh_ph','dTdp_ph','cp_ph','h_pT','v_pT', ...
-        'vL_p','vV_p','hL_p','hV_p','T_ph','v_ph','psat_T','Tsat_p','h1_pT','h2_pT','h3_rhoT','v1_pT','v2_pT','cp1_pT', ...
-        'cp2_pT','cp3_rhoT','cv3_rhoT','alphav1_pT','alphav2_pT','alphap3_rhoT','betap3_rhoT','kappaT1_pT','kappaT2_pT',...
-        'dgammadtau1_pT','dgammadpi1_pT','dgammadtautau1_pT','dgammadpipi1_pT','dgammadpitau1_pT','dgammadtau2_pT', ...
-        'dgammadpi2_pT','dgammadtautau2_pT','dgammadpipi2_pT','dgammadpitau2_pT','dphidtau3_rhoT','dphiddelta3_rhoT', ...
-        'dphidtautau3_rhoT','dphiddeltatau3_rhoT','dphiddeltadelta3_rhoT','dTsatdpsat_p','T1_ph','T2a_ph','T2b_ph','T2c_ph', ...
-        'T3a_ph','T3b_ph','v3a_ph','v3b_ph','h2bc_p','h3ab_p','TB23_p','pB23_T','p3sat_h','v3a_pT','v3b_pT','v3c_pT', ...
-        'v3d_pT','v3e_pT','v3f_pT','v3g_pT','v3h_pT','v3i_pT','v3j_pT','v3k_pT','v3l_pT','v3m_pT','v3n_pT','v3o_pT', ...
-        'v3p_pT','v3q_pT','v3r_pT','v3s_pT','v3t_pT','v3u_pT','v3v_pT','v3w_pT','v3x_pT','v3y_pT','v3z_pT','T3ab_p', ...
-        'T3cd_p','T3ef_p','T3gh_p','T3ij_p','T3jk_p','T3mn_p','T3op_p','T3qu_p','T3rx_p','T3uv_p','T3wx_p'}))
-    out = NaN;return
-end
+%   FUN is the desired function that may take 1 input, IN1, or 2 inputs, IN1
+%   and IN2. IN1 and IN2 can be scalar, column vector or matrix, and IN1 and
+%   IN2 should be the same size. If a row vector is entered, it is transposed.
+%   If a scalar is entered for one input and the other input is a vector or
+%   matrix, then the scalar is repeated to form a vector or matrix of the same
+%   size as the other input.
+%
+%   FUN is a string that is formed by the property symbol, an underscore
+%   and the property symbols the function depends on. EG: 'k_pT' is thermal
+%   conductivity, 'k', as a function of pressure, 'p', and temperature,
+%   'T'. Derivatives are formed by prefixing 'd' to the property symbol and
+%   suffixing 'd' + the property symbol to which the derivative is with
+%   respect. EG: 'dTdp_ph' is the derivative of temperature with respect to
+%   pressure as a function of pressure and enthalpy, 'h' at constant
+%   enthalpy. The exception to this rule is 'cp_ph' which is equivalent to
+%   'dTdh_ph' or the derivative of temperature with respect to pressure as a
+%   function of pressure and enthalpy at constant pressure. All derivatives
+%   are with respect to pressure at constant enthalpy or v.v.
+%
+%   Saturation is indicated by suffixing 'sat', saturated liquid 'L' and
+%   saturated vapor 'V'.
+%
+%   FUN = [d]<property-symbol>[sat|L|V][d<property-symbol>]_<property-symbol>...
+%
+% Property Symbols:
+%   p   - [MPa] pressure
+%   T   - [K] temperature
+%   h   - [kJ/kg] enthalpy
+%   v   - [m^3/kg] specific volume the reciprocal of density, IE: v = 1/rho
+%   x   - quality, mass fraction of liquid water in mixture
+%   k   - [W/m/K] thermal conductivity
+%   mu  - [Pa*s] viscosity
+%   cp  - [kJ/kg/K] specific heat at constant pressure
+%
+% Basic funcitons:
+%   h_pT, v_pT, vL_p, vV_p, hL_p, hV_p, T_ph, v_ph, k_pT, k_ph, mu_pT, mu_ph,
+%   dhLdp_p, dhVdp_p, dvdp_ph, dvdh_ph, dTdp_ph, cp_ph, dmudh_ph, dmudp_ph,
+%   psat_T, Tsat_p, dTsatdpsat_p, x_ph, x_hT, x_pv, x_vT
+%
+% Example:
+% >> press_rng = logspace(-2,2,300); % [MPa] pressure (p) range
+% >> temp_rng = 273.15+linspace(1,800,300); % [K] temperature (T) range
+% >> [p,T] = meshgrid(press_rng,temp_rng); % [MPa,K] mesh p & T
+% >> h = IAPWS_IF97('h_pT',p,T); % [kJ/kg] enthalpy = f(p,T)
+% >> psat = IAPWS_IF97('psat_T',temp_rng); % [MPa] saturation pressure
+% >> psat = psat(~isnan(psat)); % trim out of range temperatures
+% >> hLsat = IAPWS_IF97('hL_p',psat); % [kJ/kg] saturated liquid enthalpy
+% >> hVsat = IAPWS_IF97('hV_p',psat); % [kJ/kg] saturated vapor enthalpy
+% >> pcrit = 22.064; % [MPa] critical pressure
+% >> hLcrit = IAPWS_IF97('hL_p',pcrit);hVcrit = IAPWS_IF97('hV_p',pcrit);
+% >> Tcrit = IAPWS_IF97('Tsat_p',pcrit); hcrit = IAPWS_IF97('h_pT',pcrit,Tcrit);
+% >> hVL = hVsat - hLsat; % [kJ/kg] heat of vaporization
+% >> hX = hLsat*ones(1,9) + hVL*(0.1:0.1:0.9); % [kJ/kg] mixture enthalpy
+%
+% Reference: <a href="http://www.iapws.org/relguide/IF97-Rev.pdf">Revised IAPWS Industrial Formulation 1997</a>
+%
+% Copyright (c) 2013 Mark Mifofski
+
+%% check inputs
+seeHelp = 'See <a href="matlab: help IAPWS_IF97">help</a>.';
+assert(nargin>1, 'IAPWS_IF97:noInput', ...
+    ['Not enough inputs. ',seeHelp])
+assert(any(strcmpi(fun,{'x_ph','x_hT','x_pv','x_vT', ... (4)
+    'k_pT','k_ph','mu_pT','mu_ph', ... (4)
+    'dmudh_ph','dmudp_ph','dhLdp_p','dhVdp_p', ... (4)
+    'dvdp_ph','dvdh_ph','dTdp_ph','cp_ph', ... (4)
+    'h_pT','v_pT','vL_p','vV_p','hL_p','hV_p','T_ph','v_ph', ... (8)
+    'psat_T','Tsat_p','dTsatdpsat_p', ... (3)
+    'h1_pT','h2_pT','h3_rhoT','v1_pT','v2_pT', ... (5)
+    'cp1_pT','cp2_pT','cp3_rhoT','cv3_rhoT', ... (4)
+    'alphav1_pT','alphav2_pT','alphap3_rhoT', ... (3)
+    'betap3_rhoT','kappaT1_pT','kappaT2_pT',... (3)
+    'dgammadtau1_pT','dgammadpi1_pT','dgammadtautau1_pT','dgammadpipi1_pT','dgammadpitau1_pT', ... (5)
+    'dgammadtau2_pT','dgammadpi2_pT','dgammadtautau2_pT','dgammadpipi2_pT','dgammadpitau2_pT', ... (5)
+    'dphidtau3_rhoT','dphiddelta3_rhoT','dphidtautau3_rhoT','dphiddeltatau3_rhoT','dphiddeltadelta3_rhoT', ... (5)
+    'T1_ph','T2a_ph','T2b_ph','T2c_ph','T3a_ph','T3b_ph','v3a_ph','v3b_ph', ... (8)
+    'h2bc_p','h3ab_p','TB23_p','pB23_T','p3sat_h','v3a_pT','v3b_pT','v3c_pT', ... (8)
+    'v3d_pT','v3e_pT','v3f_pT','v3g_pT','v3h_pT','v3i_pT','v3j_pT','v3k_pT', ... (8)
+    'v3l_pT','v3m_pT','v3n_pT','v3o_pT','v3p_pT','v3q_pT','v3r_pT','v3s_pT', ... (8)
+    'v3t_pT','v3u_pT','v3v_pT','v3w_pT','v3x_pT','v3y_pT','v3z_pT','T3ab_p', ... (8)
+    'T3cd_p','T3ef_p','T3gh_p','T3ij_p','T3jk_p','T3mn_p','T3op_p','T3qu_p','T3rx_p','T3uv_p','T3wx_p'})), ... (11)
+    'IAPWS_IF97:noInput', ['Sorry, %s is not a valid IAPWS_IF97 function. ',seeHelp],fun)
 if nargin==2
     dim = size(in1);
     if length(dim)>2,out = NaN;return,end
@@ -42,6 +109,21 @@ if nargin==3
     if dim1(1)==1 && dim1(2)>1,in1 = in1';in2 = in2';end
     out = feval(fun,in1,in2);
 end
+end
+%% suppress definition not used for this entire file
+%#ok<*DEFNU>
+%% quality
+function x = x_ph(p,h)
+x = (h - hL_p(p))./(hV_p(p) - hL_p(p));
+end
+function x = x_hT(h,T)
+x = (h - hL_p(psat_T(T)))./(hV_p(psat_T(T)) - hL_p(psat_T(T)));
+end
+function x = x_pv(p,v)
+x = (v - vL_p(p))./(vV_p(p) - vL_p(p));
+end
+function x = x_vT(v,T)
+x = (v - vL_p(psat_T(T)))./(vV_p(psat_T(T)) - vL_p(psat_T(T)));
 end
 %% stand alone functions
 function k = k_pT(p,T)
