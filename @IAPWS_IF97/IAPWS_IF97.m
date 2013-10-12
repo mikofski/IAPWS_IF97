@@ -7,7 +7,7 @@ classdef IAPWS_IF97
     end
     methods (Static)
         %% IAPWS-IF97 stand alone functions
-        k = k_pT(p,T)
+        k = k_pT(p,T) % thermal conductivity as function of pressure and temperature
         k = k_ph(p,h)
         
         function mu = mu_ph(p,h)
