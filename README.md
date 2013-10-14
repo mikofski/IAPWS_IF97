@@ -41,19 +41,20 @@ dhLdp_p, dhVdp_p, dvdp_ph, dvdh_ph, dTdp_ph, cp_ph, dmudh_ph, dmudp_ph,
 psat_T, Tsat_p, dTsatdpsat_p, x_ph, x_hT, x_pv, x_vT
 
 Example:
->> press_rng = logspace(-2,2,300);  [MPa] pressure (p) range
->> temp_rng = 273.15+linspace(1,800,300);  [K] temperature (T) range
->> [p,T] = meshgrid(press_rng,temp_rng);  [MPa,K] mesh p & T
->> h = IAPWS_IF97('h_pT',p,T);  [kJ/kg] enthalpy = f(p,T)
->> psat = IAPWS_IF97('psat_T',temp_rng);  [MPa] saturation pressure
->> psat = psat(~isnan(psat));  trim out of range temperatures
->> hLsat = IAPWS_IF97('hL_p',psat);  [kJ/kg] saturated liquid enthalpy
->> hVsat = IAPWS_IF97('hV_p',psat);  [kJ/kg] saturated vapor enthalpy
->> pcrit = 22.064;  [MPa] critical pressure
->> hLcrit = IAPWS_IF97('hL_p',pcrit);hVcrit = IAPWS_IF97('hV_p',pcrit);
->> Tcrit = IAPWS_IF97('Tsat_p',pcrit); hcrit = IAPWS_IF97('h_pT',pcrit,Tcrit);
->> hVL = hVsat - hLsat;  [kJ/kg] heat of vaporization
->> hX = hLsat*ones(1,9) + hVL*(0.1:0.1:0.9);  [kJ/kg] mixture enthalpy
+
+    >> press_rng = logspace(-2,2,300);  [MPa] pressure (p) range
+    >> temp_rng = 273.15+linspace(1,800,300);  [K] temperature (T) range
+    >> [p,T] = meshgrid(press_rng,temp_rng);  [MPa,K] mesh p & T
+    >> h = IAPWS_IF97('h_pT',p,T);  [kJ/kg] enthalpy = f(p,T)
+    >> psat = IAPWS_IF97('psat_T',temp_rng);  [MPa] saturation pressure
+    >> psat = psat(~isnan(psat));  trim out of range temperatures
+    >> hLsat = IAPWS_IF97('hL_p',psat);  [kJ/kg] saturated liquid enthalpy
+    >> hVsat = IAPWS_IF97('hV_p',psat);  [kJ/kg] saturated vapor enthalpy
+    >> pcrit = 22.064;  [MPa] critical pressure
+    >> hLcrit = IAPWS_IF97('hL_p',pcrit);hVcrit = IAPWS_IF97('hV_p',pcrit);
+    >> Tcrit = IAPWS_IF97('Tsat_p',pcrit); hcrit = IAPWS_IF97('h_pT',pcrit,Tcrit);
+    >> hVL = hVsat - hLsat;  [kJ/kg] heat of vaporization
+    >> hX = hLsat*ones(1,9) + hVL*(0.1:0.1:0.9);  [kJ/kg] mixture enthalpy
 
 Reference: [Revised IAPWS Industrial Formulation 1997](http://www.iapws.org/relguide/IF97-Rev.pdf)
 
