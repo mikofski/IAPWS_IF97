@@ -26,14 +26,14 @@ Saturation is indicated by suffixing 'sat', saturated liquid 'L' and saturated v
 FUN = [d]<property-symbol>[sat|L|V][d<property-symbol>]_<property-symbol>...
 
 Property Symbols:
-p   - [MPa] pressure
-T   - [K] temperature
-h   - [kJ/kg] enthalpy
-v   - [m^3/kg] specific volume the reciprocal of density, IE: v = 1/rho
-x   - quality, mass fraction of liquid water in mixture
-k   - [W/m/K] thermal conductivity
-mu  - [Pa*s] viscosity
-cp  - [kJ/kg/K] specific heat at constant pressure
+* p [MPa] pressure
+* T [K] temperature
+* h [kJ/kg] enthalpy
+* v [m^3/kg] specific volume the reciprocal of density, IE: v = 1/rho
+* x quality, mass fraction of liquid water in mixture
+* k [W/m/K] thermal conductivity
+* mu [Pa*s] viscosity
+* cp [kJ/kg/K] specific heat at constant pressure
 
 Basic funcitons:
 h_pT, v_pT, vL_p, vV_p, hL_p, hV_p, T_ph, v_ph, k_pT, k_ph, mu_pT, mu_ph,
