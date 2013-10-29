@@ -23,22 +23,22 @@ function of pressure and enthalpy at constant pressure. All derivatives are with
 
 Saturation is indicated by suffixing 'sat', saturated liquid 'L' and saturated vapor 'V'.
 
-FUN = [d]<property-symbol>[sat|L|V][d<property-symbol>]_<property-symbol>...
+`FUN = [d]<property-symbol>[sat|L|V][d<property-symbol>]_<property-symbol>...`
 
 Property Symbols:
-* p [MPa] pressure
-* T [K] temperature
-* h [kJ/kg] enthalpy
-* v [m^3/kg] specific volume the reciprocal of density, IE: v = 1/rho
-* x quality, mass fraction of liquid water in mixture
-* k [W/m/K] thermal conductivity
-* mu [Pa*s] viscosity
-* cp [kJ/kg/K] specific heat at constant pressure
+* `p [MPa]` pressure
+* `T [K]` temperature
+* `h [kJ/kg]` enthalpy
+* `v [m^3/kg]` specific volume the reciprocal of density, IE: v = 1/rho
+* `x` quality, mass fraction of liquid water in mixture
+* `k [W/m/K]` thermal conductivity
+* `mu [Pa*s]` viscosity
+* `cp [kJ/kg/K]` specific heat at constant pressure
 
-Basic funcitons:
-h_pT, v_pT, vL_p, vV_p, hL_p, hV_p, T_ph, v_ph, k_pT, k_ph, mu_pT, mu_ph,
-dhLdp_p, dhVdp_p, dvdp_ph, dvdh_ph, dTdp_ph, cp_ph, dmudh_ph, dmudp_ph,
-psat_T, Tsat_p, dTsatdpsat_p, x_ph, x_hT, x_pv, x_vT
+Basic functions:
+`h_pT`, `v_pT`, `vL_p`, `vV_p`, `hL_p`, `hV_p`, `T_ph`, `v_ph`, `k_pT`, `k_ph`, `mu_pT`, `mu_ph`,
+`dhLdp_p`, `dhVdp_p`, `dvdp_ph`, `dvdh_ph`, `dTdp_ph`, `cp_ph`, `dmudh_ph`, `dmudp_ph`,
+`psat_T`, `Tsat_p`, `dTsatdpsat_p`, `x_ph`, `x_hT`, `x_pv`, `x_vT`
 
 Example:
 
