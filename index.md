@@ -39,7 +39,7 @@ Property Symbols:
 * `mu [Pa*s]` viscosity
 * `cp [kJ/kg/K]` specific heat at constant pressure
 
-Basic funcitons:
+Basic functions:
 `h_pT`, `v_pT`, `vL_p`, `vV_p`, `hL_p`, `hV_p`, `T_ph`, `v_ph`, `k_pT`, `k_ph`,
 `mu_pT`, `mu_ph`, `dhLdp_p`, `dhVdp_p`, `dvdp_ph`, `dvdh_ph`, `dTdp_ph`,
 `cp_ph`, `dmudh_ph`, `dmudp_ph`, `psat_T`, `Tsat_p`, `dTsatdpsat_p`, `x_ph`,
