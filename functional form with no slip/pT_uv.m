@@ -44,7 +44,7 @@ u_pT = @(p,T)h_pT(p,T)-p*v_pT(p,T); % [kJ/kg] internal energy
 Fu_pT = @(p,T,u)u-u_pT(p,T);
 Fv_pT = @(p,T,v)v-v_pT(p,T);
 fun = @(x)[Fu_pT(x(1),x(2),u),Fv_pT(x(1),x(2),v)];
-[x,resnorm,F,exitflag,output,jacob] = NewtonRaphson.newtonraphson(fun,x0,options);
+[x,resnorm,F,exitflag,output,jacob] = newtonraphson(fun,x0,options);
 p = x(1);
 T = x(2);
 end
