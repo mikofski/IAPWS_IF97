@@ -1,4 +1,133 @@
-%% IAPWS-IF97 stand alone functions
+function out = IAPWS_IF97_slip(fun,in1,in2)
+% IAPWS_IF97(FUN,IN1,IN2)
+%   27 basic water functions of water properties, based on the International
+%   Association on Properties of Water and Steam Industrial Formulation 1997
+%   (IAPWS-IF97), IAPWS-IF97-S01, IAPWS-IF97-S03rev, IAPWS-IF97-S04,
+%   IAPWS-IF97-S05, Revised Advisory Note No. 3 Thermodynamic Derivatives from
+%   IAPWS Formulations 2008, Release on the IAPWS Formulation 2008 for the
+%   Viscosity of Ordinary Water Substance, 2008 Revised Release on the IAPWS
+%   Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance.
+%
+%   FUN is the desired function that may take 1 input, IN1, or 2 inputs, IN1
+%   and IN2. IN1 and IN2 can be scalar, column vector or matrix, and IN1 and
+%   IN2 should be the same size. If a row vector is entered, it is transposed.
+%   If a scalar is entered for one input and the other input is a vector or
+%   matrix, then the scalar is repeated to form a vector or matrix of the same
+%   size as the other input.
+%
+%   FUN is a string that is formed by the property symbol, an underscore
+%   and the property symbols the function depends on. EG: 'k_pT' is thermal
+%   conductivity, 'k', as a function of pressure, 'p', and temperature,
+%   'T'. Derivatives are formed by prefixing 'd' to the property symbol and
+%   suffixing 'd' + the property symbol to which the derivative is with
+%   respect. EG: 'dTdp_ph' is the derivative of temperature with respect to
+%   pressure as a function of pressure and enthalpy, 'h' at constant
+%   enthalpy. The exception to this rule is 'cp_ph' which is equivalent to
+%   'dTdh_ph' or the derivative of temperature with respect to pressure as a
+%   function of pressure and enthalpy at constant pressure. All derivatives
+%   are with respect to pressure at constant enthalpy or v.v.
+%
+%   Saturation is indicated by suffixing 'sat', saturated liquid 'L' and
+%   saturated vapor 'V'.
+%
+%   This version uses Zivi slip model for mixed flow, which slip = 2/3.
+%
+%   FUN = [d]<property-symbol>[sat|L|V][d<property-symbol>]_<property-symbol>...
+%
+% Property Symbols:
+%   p   - [MPa] pressure
+%   T   - [K] temperature
+%   h   - [kJ/kg] enthalpy
+%   v   - [m^3/kg] specific volume the reciprocal of density, IE: v = 1/rho
+%   x   - quality, mass fraction of liquid water in mixture
+%   k   - [W/m/K] thermal conductivity
+%   mu  - [Pa*s] viscosity
+%   cp  - [kJ/kg/K] specific heat at constant pressure
+%
+% Basic funcitons:
+%   h_pT, v_pT, vL_p, vV_p, hL_p, hV_p, T_ph, v_ph, k_pT, k_ph, mu_pT, mu_ph,
+%   dhLdp_p, dhVdp_p, dvdp_ph, dvdh_ph, dTdp_ph, cp_ph, dmudh_ph, dmudp_ph,
+%   psat_T, Tsat_p, dTsatdpsat_p, x_ph, x_hT, x_pv, x_vT
+%
+% Example:
+% >> press_rng = logspace(-2,2,300); % [MPa] pressure (p) range
+% >> temp_rng = 273.15+linspace(1,800,300); % [K] temperature (T) range
+% >> [p,T] = meshgrid(press_rng,temp_rng); % [MPa,K] mesh p & T
+% >> h = IAPWS_IF97('h_pT',p,T); % [kJ/kg] enthalpy = f(p,T)
+% >> psat = IAPWS_IF97('psat_T',temp_rng); % [MPa] saturation pressure
+% >> psat = psat(~isnan(psat)); % trim out of range temperatures
+% >> hLsat = IAPWS_IF97('hL_p',psat); % [kJ/kg] saturated liquid enthalpy
+% >> hVsat = IAPWS_IF97('hV_p',psat); % [kJ/kg] saturated vapor enthalpy
+% >> pcrit = 22.064; % [MPa] critical pressure
+% >> hLcrit = IAPWS_IF97('hL_p',pcrit);hVcrit = IAPWS_IF97('hV_p',pcrit);
+% >> Tcrit = IAPWS_IF97('Tsat_p',pcrit); hcrit = IAPWS_IF97('h_pT',pcrit,Tcrit);
+% >> hVL = hVsat - hLsat; % [kJ/kg] heat of vaporization
+% >> hX = hLsat*ones(1,9) + hVL*(0.1:0.1:0.9); % [kJ/kg] mixture enthalpy
+%
+% Reference: <a href="http://www.iapws.org/relguide/IF97-Rev.pdf">Revised IAPWS Industrial Formulation 1997</a>
+%
+% Copyright (c) 2013 Mark Mifofski
+
+%% check inputs
+seeHelp = 'See <a href="matlab: help IAPWS_IF97">help</a>.';
+assert(nargin>1, 'IAPWS_IF97:noInput', ...
+    ['Not enough inputs. ',seeHelp])
+assert(any(strcmpi(fun,{'x_ph','x_hT','x_pv','x_vT', ... (4)
+    'k_pT','k_ph','mu_pT','mu_ph', ... (4)
+    'dmudh_ph','dmudp_ph','dhLdp_p','dhVdp_p','dvLdp_p','dvVdp_p', ... (6)
+    'dvdp_ph','dvdh_ph','dTdp_ph','cp_ph', ... (4)
+    'h_pT','v_pT','vL_p','vV_p','hL_p','hV_p','T_ph','v_ph', ... (8)
+    'psat_T','Tsat_p','dTsatdpsat_p', ... (3)
+    'h1_pT','h2_pT','h3_rhoT','v1_pT','v2_pT', ... (5)
+    'cp1_pT','cp2_pT','cp3_rhoT','cv3_rhoT', ... (4)
+    'alphav1_pT','alphav2_pT','alphap3_rhoT', ... (3)
+    'betap3_rhoT','kappaT1_pT','kappaT2_pT',... (3)
+    'dgammadtau1_pT','dgammadpi1_pT','dgammadtautau1_pT','dgammadpipi1_pT','dgammadpitau1_pT', ... (5)
+    'dgammadtau2_pT','dgammadpi2_pT','dgammadtautau2_pT','dgammadpipi2_pT','dgammadpitau2_pT', ... (5)
+    'dphidtau3_rhoT','dphiddelta3_rhoT','dphidtautau3_rhoT','dphiddeltatau3_rhoT','dphiddeltadelta3_rhoT', ... (5)
+    'T1_ph','T2a_ph','T2b_ph','T2c_ph','T3a_ph','T3b_ph','v3a_ph','v3b_ph', ... (8)
+    'h2bc_p','h3ab_p','TB23_p','pB23_T','p3sat_h','v3a_pT','v3b_pT','v3c_pT', ... (8)
+    'v3d_pT','v3e_pT','v3f_pT','v3g_pT','v3h_pT','v3i_pT','v3j_pT','v3k_pT', ... (8)
+    'v3l_pT','v3m_pT','v3n_pT','v3o_pT','v3p_pT','v3q_pT','v3r_pT','v3s_pT', ... (8)
+    'v3t_pT','v3u_pT','v3v_pT','v3w_pT','v3x_pT','v3y_pT','v3z_pT','T3ab_p', ... (8)
+    'T3cd_p','T3ef_p','T3gh_p','T3ij_p','T3jk_p','T3mn_p','T3op_p','T3qu_p','T3rx_p','T3uv_p','T3wx_p'})), ... (11)
+    'IAPWS_IF97:noInput', ['Sorry, %s is not a valid IAPWS_IF97 function. ',seeHelp],fun)
+if nargin==2
+    dim = size(in1);
+    if length(dim)>2,out = NaN;return,end
+    if dim(1)==1 && dim(2)>1,in1 = in1';end
+    out = feval(fun,in1);
+end
+if nargin==3
+    dim1 = size(in1);dim2 = size(in2);
+    if length(dim1)>2 || length(dim2)>2,out = NaN;return,end
+    if any(dim1~=dim2);
+        if dim1==ones(1,2),in1 = in1*ones(dim2);dim1=dim2;
+        elseif dim2==ones(1,2),in2 = in2*ones(dim1);
+        elseif dim1==fliplr(dim2),in1 = in1';dim1=dim2;
+        else out = NaN;return
+        end
+    end
+    if dim1(1)==1 && dim1(2)>1,in1 = in1';in2 = in2';end
+    out = feval(fun,in1,in2);
+end
+end
+%% suppress definition not used for this entire file
+%#ok<*DEFNU>
+%% quality
+function x = x_ph(p,h)
+x = (h - hL_p(p))./(hV_p(p) - hL_p(p));
+end
+function x = x_hT(h,T)
+x = (h - hL_p(psat_T(T)))./(hV_p(psat_T(T)) - hL_p(psat_T(T)));
+end
+function x = x_pv(p,v)
+x = (v - vL_p(p))./(vV_p(p) - vL_p(p));
+end
+function x = x_vT(v,T)
+x = (v - vL_p(psat_T(T)))./(vV_p(psat_T(T)) - vL_p(psat_T(T)));
+end
+%% stand alone functions
 function k = k_pT(p,T)
 % k = k_pT(p,T)
 %   thermal conductivity, k [W/m/K], as a function of pressure, p [MPa], and temperature, T [K]
@@ -783,8 +912,9 @@ if any(any(valid4a))
     dhLdp(valid4a) = v1_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav1_pT(p4a,Tsat4a))/conversion_factor + cp1_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
 end
 if any(any(valid4b))
-    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);
-    dhLdp(valid4b) = (v3L - Tsat4b.*alphap3L./betap3_rhoT(rho3L,Tsat4b).*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;dTsatdpsat4b = dTsatdpsat_p(p4b);
+    betap3L = betap3_rhoT(rho3L,Tsat4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);cv3L = cv3_rhoT(rho3L,Tsat4b);
+    dhLdp(valid4b) = (v3L - Tsat4b.*alphap3L./betap3L.*(1 - p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor + (cv3L + p4b.*v3L.*alphap3L).*dTsatdpsat4b;
 end
 end
 function dhVdp = dhVdp_p(p)
@@ -813,8 +943,73 @@ if any(any(valid4a))
     dhVdp(valid4a) = v2_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav2_pT(p4a,Tsat4a))/conversion_factor + cp2_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
 end
 if any(any(valid4b))
-    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3V = vV_p(p4b);rho3V = 1./v3V;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);
-    dhVdp(valid4b) = (v3V - Tsat4b.*alphap3V./betap3_rhoT(rho3V,Tsat4b).*(1 + p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3V,Tsat4b).*dTsatdpsat4b;
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3V = vV_p(p4b);rho3V = 1./v3V;dTsatdpsat4b = dTsatdpsat_p(p4b);
+    betap3V = betap3_rhoT(rho3V,Tsat4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);cv3V = cv3_rhoT(rho3V,Tsat4b);
+    dhVdp(valid4b) = (v3V - Tsat4b.*alphap3V./betap3V.*(1 - p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor + (cv3V + p4b.*v3V.*alphap3V).*dTsatdpsat4b;
+end
+end
+function dvLdp = dvLdp_p(p)
+% dvLdp = dvLdp_ph(p)
+%   Derivative of specific volument wrt pressure of saturated liquid, dvLdp [(m^3/kg)/MPa], as a function of pressure, p [MPa]
+% based on IAPWS-IF97
+% Reference: http://www.iapws.org/
+% June 16, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+dvLdp = NaN(dim);
+%% constants and calculated
+Tmin = 273.16; % [K] minimum temperature is triple point
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pc = 22.064; % [MPa] critical pressure
+Tsat = Tsat_p(p); % [K] saturation temperatures
+%% valid ranges
+valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
+valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
+    vL4a = v1_pT(p4a,Tsat4a);dTsatdpsat4a = dTsatdpsat_p(p4a);
+    alphavL4a = alphav1_pT(p4a,Tsat4a);
+    dvLdp(valid4a) = vL4a.*(-kappaT1_pT(p4a,Tsat4a) + alphavL4a.*dTsatdpsat4a); % [(m^3/kg)/MPa]
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;dTsatdpsat4b = dTsatdpsat_p(p4b);
+    betap3L = betap3_rhoT(rho3L,Tsat4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);
+    dvLdp(valid4b) = (-1./p4b + alphap3L.*dTsatdpsat4b)./betap3L; % [(m^3/kg)/MPa]
+end
+end
+function dvVdp = dvVdp_p(p)
+% dhVdp = dhVdp_ph(p)
+%   Derivative of enthalpy wrt pressure of saturated vapor, dhVdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
+% based on IAPWS-IF97
+% Reference: http://www.iapws.org/
+% June 16, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+dvVdp = NaN(dim);
+%% constants and calculated
+Tmin = 273.16; % [K] minimum temperature is triple point
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pc = 22.064; % [MPa] critical pressure
+Tsat = Tsat_p(p); % [K] saturation temperatures
+%% valid ranges
+valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
+valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
+    vV4a = v2_pT(p4a,Tsat4a);dTsatdpsat4a = dTsatdpsat_p(p4a);
+    alphavV4a = alphav2_pT(p4a,Tsat4a);
+    dvVdp(valid4a) = vV4a.*(-kappaT2_pT(p4a,Tsat4a) + alphavV4a.*dTsatdpsat4a); % [(m^3/kg)/MPa]
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3V = vV_p(p4b);rho3V = 1./v3V;dTsatdpsat4b = dTsatdpsat_p(p4b);
+    betap3V = betap3_rhoT(rho3V,Tsat4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);
+    dvVdp(valid4b) = (-1./p4b + alphap3V.*dTsatdpsat4b)./betap3V; % [(m^3/kg)/MPa]
 end
 end
 function dvdp = dvdp_ph(p,h)
@@ -927,10 +1122,10 @@ if any(any(valid4b))
     p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;v3V = vV_p(p4b);rho3V = 1./v3V;
     h3L = h3_rhoT(rho3L,Tsat4b);h3V = h3_rhoT(rho3V,Tsat4b);betap3L = betap3_rhoT(rho3L,Tsat4b);betap3V = betap3_rhoT(rho3V,Tsat4b);
     dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);
-    dvLdp = -(1./p4b + alphap3L.*dTsatdpsat4b)./betap3L; % [(m^3/kg)/MPa]
-    dvVdp = -(1./p4b + alphap3V.*dTsatdpsat4b)./betap3V; % [(m^3/kg)/MPa]
-    dhLdp = (v3L - Tsat4b.*alphap3L./betap3L.*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
-    dhVdp = (v3V - Tsat4b.*alphap3V./betap3V.*(1 + p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3V,Tsat4b).*dTsatdpsat4b;
+    dvLdp = (-1./p4b + alphap3L.*dTsatdpsat4b)./betap3L; % [(m^3/kg)/MPa]
+    dvVdp = (-1./p4b + alphap3V.*dTsatdpsat4b)./betap3V; % [(m^3/kg)/MPa]
+    dhLdp = (v3L - Tsat4b.*alphap3L./betap3L.*(1 - p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor + (cv3_rhoT(rho3L,Tsat4b) + p4b.*v3L.*alphap3L).*dTsatdpsat4b;
+    dhVdp = (v3V - Tsat4b.*alphap3V./betap3V.*(1 - p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor + (cv3_rhoT(rho3V,Tsat4b) + p4b.*v3V.*alphap3V).*dTsatdpsat4b;
     hfg = h3V-h3L;%vfg = v3V-v3L;
     %     dvdp(valid4b) = dvLdp + ((h(valid4b)-h3L).*((dvVdp-dvLdp) - (dhVdp-dhLdp).*vfg./hfg) - dhLdp.*vfg)./hfg;
     % 3/30/10 calculate void fraction from Zivi (1964) drift-flux correlation
