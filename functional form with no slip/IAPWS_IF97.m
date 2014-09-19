@@ -72,7 +72,7 @@ assert(nargin>1, 'IAPWS_IF97:noInput', ...
     ['Not enough inputs. ',seeHelp])
 assert(any(strcmpi(fun,{'x_ph','x_hT','x_pv','x_vT', ... (4)
     'k_pT','k_ph','mu_pT','mu_ph', ... (4)
-    'dmudh_ph','dmudp_ph','dhLdp_p','dhVdp_p', ... (4)
+    'dmudh_ph','dmudp_ph','dhLdp_p','dhVdp_p','dvLdp_p','dvVdp_p', ... (6)
     'dvdp_ph','dvdh_ph','dTdp_ph','cp_ph', ... (4)
     'h_pT','v_pT','vL_p','vV_p','hL_p','hV_p','T_ph','v_ph', ... (8)
     'psat_T','Tsat_p','dTsatdpsat_p', ... (3)
@@ -910,8 +910,9 @@ if any(any(valid4a))
     dhLdp(valid4a) = v1_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav1_pT(p4a,Tsat4a))/conversion_factor + cp1_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
 end
 if any(any(valid4b))
-    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);
-    dhLdp(valid4b) = (v3L - Tsat4b.*alphap3L./betap3_rhoT(rho3L,Tsat4b).*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;dTsatdpsat4b = dTsatdpsat_p(p4b);
+    betap3L = betap3_rhoT(rho3L,Tsat4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);cv3L = cv3_rhoT(rho3L,Tsat4b);
+    dhLdp(valid4b) = (v3L - Tsat4b.*alphap3L./betap3L.*(1 - p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor + (cv3L + p4b.*v3L.*alphap3L).*dTsatdpsat4b;
 end
 end
 function dhVdp = dhVdp_p(p)
@@ -940,8 +941,73 @@ if any(any(valid4a))
     dhVdp(valid4a) = v2_pT(p4a,Tsat4a).*(1-Tsat4a.*alphav2_pT(p4a,Tsat4a))/conversion_factor + cp2_pT(p4a,Tsat4a).*dTsatdpsat_p(p4a); % [(kJ/kg)/MPa]
 end
 if any(any(valid4b))
-    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3V = vV_p(p4b);rho3V = 1./v3V;dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);
-    dhVdp(valid4b) = (v3V - Tsat4b.*alphap3V./betap3_rhoT(rho3V,Tsat4b).*(1 + p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3V,Tsat4b).*dTsatdpsat4b;
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3V = vV_p(p4b);rho3V = 1./v3V;dTsatdpsat4b = dTsatdpsat_p(p4b);
+    betap3V = betap3_rhoT(rho3V,Tsat4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);cv3V = cv3_rhoT(rho3V,Tsat4b);
+    dhVdp(valid4b) = (v3V - Tsat4b.*alphap3V./betap3V.*(1 - p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor + (cv3V + p4b.*v3V.*alphap3V).*dTsatdpsat4b;
+end
+end
+function dvLdp = dvLdp_p(p)
+% dvLdp = dvLdp_ph(p)
+%   Derivative of specific volument wrt pressure of saturated liquid, dvLdp [(m^3/kg)/MPa], as a function of pressure, p [MPa]
+% based on IAPWS-IF97
+% Reference: http://www.iapws.org/
+% June 16, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+dvLdp = NaN(dim);
+%% constants and calculated
+Tmin = 273.16; % [K] minimum temperature is triple point
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pc = 22.064; % [MPa] critical pressure
+Tsat = Tsat_p(p); % [K] saturation temperatures
+%% valid ranges
+valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
+valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
+    vL4a = v1_pT(p4a,Tsat4a);dTsatdpsat4a = dTsatdpsat_p(p4a);
+    alphavL4a = alphav1_pT(p4a,Tsat4a);
+    dvLdp(valid4a) = vL4a.*(-kappaT1_pT(p4a,Tsat4a) + alphavL4a.*dTsatdpsat4a); % [(m^3/kg)/MPa]
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;dTsatdpsat4b = dTsatdpsat_p(p4b);
+    betap3L = betap3_rhoT(rho3L,Tsat4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);
+    dvLdp(valid4b) = (-1./p4b + alphap3L.*dTsatdpsat4b)./betap3L; % [(m^3/kg)/MPa]
+end
+end
+function dvVdp = dvVdp_p(p)
+% dhVdp = dhVdp_ph(p)
+%   Derivative of enthalpy wrt pressure of saturated vapor, dhVdp [(kJ/kg)/MPa], as a function of pressure, p [MPa]
+% based on IAPWS-IF97
+% Reference: http://www.iapws.org/
+% June 16, 2009
+% Mark Mikofski
+%% size of inputs
+dim = size(p);
+dvVdp = NaN(dim);
+%% constants and calculated
+Tmin = 273.16; % [K] minimum temperature is triple point
+TB13 = 623.15; % [K] temperature at boundary between region 1 and 3
+pmin = psat_T(Tmin); % [MPa] minimum pressure is 611.657 Pa
+pB13sat = psat_T(TB13); % [MPa] saturation pressure at boundary between region 1 and 3, 16.5291643 MPa
+pc = 22.064; % [MPa] critical pressure
+Tsat = Tsat_p(p); % [K] saturation temperatures
+%% valid ranges
+valid4a = p>=pmin & p<=pB13sat; % valid range for saturated liquid in region 4a
+valid4b = p>pB13sat & p<=pc; % valid range for saturated liquid in region 4b
+if any(any(valid4a))
+    p4a = p(valid4a);Tsat4a = Tsat(valid4a);
+    vV4a = v2_pT(p4a,Tsat4a);dTsatdpsat4a = dTsatdpsat_p(p4a);
+    alphavV4a = alphav2_pT(p4a,Tsat4a);
+    dvVdp(valid4a) = vV4a.*(-kappaT2_pT(p4a,Tsat4a) + alphavV4a.*dTsatdpsat4a); % [(m^3/kg)/MPa]
+end
+if any(any(valid4b))
+    p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3V = vV_p(p4b);rho3V = 1./v3V;dTsatdpsat4b = dTsatdpsat_p(p4b);
+    betap3V = betap3_rhoT(rho3V,Tsat4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);
+    dvVdp(valid4b) = (-1./p4b + alphap3V.*dTsatdpsat4b)./betap3V; % [(m^3/kg)/MPa]
 end
 end
 function dvdp = dvdp_ph(p,h)
@@ -1044,10 +1110,10 @@ if any(any(valid4b))
     p4b = p(valid4b); Tsat4b = Tsat(valid4b);v3L = vL_p(p4b);rho3L = 1./v3L;v3V = vV_p(p4b);rho3V = 1./v3V;
     h3L = h3_rhoT(rho3L,Tsat4b);h3V = h3_rhoT(rho3V,Tsat4b);betap3L = betap3_rhoT(rho3L,Tsat4b);betap3V = betap3_rhoT(rho3V,Tsat4b);
     dTsatdpsat4b = dTsatdpsat_p(p4b);alphap3L = alphap3_rhoT(rho3L,Tsat4b);alphap3V = alphap3_rhoT(rho3V,Tsat4b);
-    dvLdp = -(1./p4b + alphap3L.*dTsatdpsat4b)./betap3L; % [(m^3/kg)/MPa]
-    dvVdp = -(1./p4b + alphap3V.*dTsatdpsat4b)./betap3V; % [(m^3/kg)/MPa]
-    dhLdp = (v3L - Tsat4b.*alphap3L./betap3L.*(1 + p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3L,Tsat4b).*dTsatdpsat4b;
-    dhVdp = (v3V - Tsat4b.*alphap3V./betap3V.*(1 + p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor - cv3_rhoT(rho3V,Tsat4b).*dTsatdpsat4b;
+    dvLdp = (-1./p4b + alphap3L.*dTsatdpsat4b)./betap3L; % [(m^3/kg)/MPa]
+    dvVdp = (-1./p4b + alphap3V.*dTsatdpsat4b)./betap3V; % [(m^3/kg)/MPa]
+    dhLdp = (v3L - Tsat4b.*alphap3L./betap3L.*(1 - p4b.*alphap3L.*dTsatdpsat4b))/conversion_factor + (cv3_rhoT(rho3L,Tsat4b) + p4b.*v3L.*alphap3L).*dTsatdpsat4b;
+    dhVdp = (v3V - Tsat4b.*alphap3V./betap3V.*(1 - p4b.*alphap3V.*dTsatdpsat4b))/conversion_factor + (cv3_rhoT(rho3V,Tsat4b) + p4b.*v3V.*alphap3V).*dTsatdpsat4b;
     hfg = h3V-h3L;vfg = v3V-v3L;
     dvdp(valid4b) = dvLdp + ((h(valid4b)-h3L).*((dvVdp-dvLdp) - (dhVdp-dhLdp).*vfg./hfg) - dhLdp.*vfg)./hfg;
 end
