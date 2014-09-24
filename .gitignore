@@ -2,9 +2,11 @@
 *.fig
 *.png
 *.html
-/html
+html/
 *.pdf
+dist/
 *.zip
+# gh-pages
 Gemfile
 Gemfile.lock
 _site/
