@@ -1,4 +1,10 @@
 _site/
 Gemfile
 Gemfile.lock
+# master
 IAPWS_IF97.asv
+dist/
+html/
+IAPWS_IF97_Pressure-Enthalpy_Diagram.png
+h_pT.fig
+
