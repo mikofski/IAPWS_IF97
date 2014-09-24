@@ -61,7 +61,7 @@ Example:
     >> hVL = hVsat - hLsat;  [kJ/kg] heat of vaporization
     >> hX = hLsat*ones(1,9) + hVL*(0.1:0.1:0.9);  [kJ/kg] mixture enthalpy
 
-![Pressure-Enthalpy Diagram]({{ site.url }}/images/IAPWS_IF97_Pressure-Enthalpy_Diagram "Pressure-Enthalpy Diagram")
+![Pressure-Enthalpy Diagram]({{ site.url }}/images/IAPWS_IF97_Pressure-Enthalpy_Diagram.png "Pressure-Enthalpy Diagram")
 
 Reference: [Revised IAPWS Industrial Formulation 1997](http://www.iapws.org/relguide/IF97-Rev.pdf)
 
