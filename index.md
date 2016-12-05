@@ -12,7 +12,7 @@ Installation
 
 IAPWS_IF97 Standalone Function with No Slip
 ===========================================
-IAPWS_IF97 is 27 basic water functions of water properties, based on the International Association on Properties of Water and Steam Industrial Formulation 1997 (IAPWS-IF97), IAPWS-IF97-S01, IAPWS-IF97-S03rev, IAPWS-IF97-S04, IAPWS-IF97-S05, Revised Advisory Note No. 3 Thermodynamic Derivatives from IAPWS formulations 2008, Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance, 2008 Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance.
+IAPWS_IF97 is 27 basic water functions of water properties, based on the [International Association on Properties of Water and Steam Industrial Formulation 1997 (IAPWS-IF97)][1], [IAPWS-IF97-S01][2], [IAPWS-IF97-S03rev][3], [IAPWS-IF97-S04][4], [IAPWS-IF97-S05][5], [Revised Advisory Note No. 3 Thermodynamic Derivatives from IAPWS formulations 2008][6], [Release on the IAPWS Formulation 2008 for the Viscosity of Ordinary Water Substance][7], [2008 Revised Release on the IAPWS Formulation 1985 for the Thermal Conductivity of Ordinary Water Substance][8].
 
 Usage
 -----
@@ -66,3 +66,12 @@ Example:
 Reference: [Revised IAPWS Industrial Formulation 1997](http://www.iapws.org/relguide/IF97-Rev.pdf)
 
 Copyright (c) 2013 Mark Mifofski
+
+[1]: http://www.iapws.org/relguide/IF97-Rev.html
+[2]: http://www.iapws.org/relguide/Supp-PHS12-2014.pdf
+[3]: http://www.iapws.org/relguide/Supp-Tv(ph,ps)3-2014.pdf
+[4]: http://www.iapws.org/relguide/Supp-phs3-2014.pdf
+[5]: http://www.iapws.org/relguide/Supp-VPT3-2016.pdf
+[6]: http://www.iapws.org/relguide/Advise3.pdf
+[7]: http://www.iapws.org/relguide/viscosity.html
+[8]: http://www.iapws.org/relguide/ThCond.html
