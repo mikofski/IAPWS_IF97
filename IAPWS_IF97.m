@@ -23,7 +23,7 @@ function out = IAPWS_IF97(fun,in1,in2)
 %   respect. EG: 'dTdp_ph' is the derivative of temperature with respect to
 %   pressure as a function of pressure and enthalpy, 'h' at constant
 %   enthalpy. The exception to this rule is 'cp_ph' which is equivalent to
-%   'dTdh_ph' or the derivative of temperature with respect to pressure as a
+%   'dhdT_ph' or the derivative of temperature with respect to pressure as a
 %   function of pressure and enthalpy at constant pressure. All derivatives
 %   are with respect to pressure at constant enthalpy or v.v.
 %
@@ -88,8 +88,31 @@ assert(any(strcmpi(fun,{'x_ph','x_hT','x_pv','x_vT', ... (4)
     'v3d_pT','v3e_pT','v3f_pT','v3g_pT','v3h_pT','v3i_pT','v3j_pT','v3k_pT', ... (8)
     'v3l_pT','v3m_pT','v3n_pT','v3o_pT','v3p_pT','v3q_pT','v3r_pT','v3s_pT', ... (8)
     'v3t_pT','v3u_pT','v3v_pT','v3w_pT','v3x_pT','v3y_pT','v3z_pT','T3ab_p', ... (8)
-    'T3cd_p','T3ef_p','T3gh_p','T3ij_p','T3jk_p','T3mn_p','T3op_p','T3qu_p','T3rx_p','T3uv_p','T3wx_p'})), ... (11)
+    'T3cd_p','T3ef_p','T3gh_p','T3ij_p','T3jk_p','T3mn_p','T3op_p','T3qu_p','T3rx_p','T3uv_p','T3wx_p', ... (11)
+    'd2gammadtau2_pT','d2gammadpi2_pT','d2gammadtautau2_pT','d2gammadpipi2_pT','d2gammadpitau2_pT',... 
+    'w1_pT','w2_pT','u1_pT','u2_pT','cv1_pT','cv2_pT',...
+    'gamma1_pT','gamma2_pT','s1_pT','s2_pT','phi3_rhoT'})),...
     'IAPWS_IF97:noInput', ['Sorry, %s is not a valid IAPWS_IF97 function. ',seeHelp],fun)
+% assert(any(strcmpi(fun,{'x_ph','x_hT','x_pv','x_vT', ... (4)
+%     'k_pT','k_ph','mu_pT','mu_ph', ... (4)
+%     'dmudh_ph','dmudp_ph','dhLdp_p','dhVdp_p','dvLdp_p','dvVdp_p', ... (6)
+%     'dvdp_ph','dvdh_ph','dTdp_ph','cp_ph', ... (4)
+%     'h_pT','v_pT','vL_p','vV_p','hL_p','hV_p','T_ph','v_ph', ... (8)
+%     'psat_T','Tsat_p','dTsatdpsat_p', ... (3)
+%     'h1_pT','h2_pT','h3_rhoT','v1_pT','v2_pT', ... (5)
+%     'cp1_pT','cp2_pT','cp3_rhoT','cv3_rhoT', ... (4)
+%     'alphav1_pT','alphav2_pT','alphap3_rhoT', ... (3)
+%     'betap3_rhoT','kappaT1_pT','kappaT2_pT',... (3)
+%     'dgammadtau1_pT','dgammadpi1_pT','dgammadtautau1_pT','dgammadpipi1_pT','dgammadpitau1_pT', ... (5)
+%     'dgammadtau2_pT','dgammadpi2_pT','dgammadtautau2_pT','dgammadpipi2_pT','dgammadpitau2_pT', ... (5)
+%     'dphidtau3_rhoT','dphiddelta3_rhoT','dphidtautau3_rhoT','dphiddeltatau3_rhoT','dphiddeltadelta3_rhoT', ... (5)
+%     'T1_ph','T2a_ph','T2b_ph','T2c_ph','T3a_ph','T3b_ph','v3a_ph','v3b_ph', ... (8)
+%     'h2bc_p','h3ab_p','TB23_p','pB23_T','p3sat_h','v3a_pT','v3b_pT','v3c_pT', ... (8)
+%     'v3d_pT','v3e_pT','v3f_pT','v3g_pT','v3h_pT','v3i_pT','v3j_pT','v3k_pT', ... (8)
+%     'v3l_pT','v3m_pT','v3n_pT','v3o_pT','v3p_pT','v3q_pT','v3r_pT','v3s_pT', ... (8)
+%     'v3t_pT','v3u_pT','v3v_pT','v3w_pT','v3x_pT','v3y_pT','v3z_pT','T3ab_p', ... (8)
+%     'T3cd_p','T3ef_p','T3gh_p','T3ij_p','T3jk_p','T3mn_p','T3op_p','T3qu_p','T3rx_p','T3uv_p','T3wx_p'})), ... (11)
+%     'IAPWS_IF97:noInput', ['Sorry, %s is not a valid IAPWS_IF97 function. ',seeHelp],fun)
 if nargin==2
     dim = size(in1);
     if length(dim)>2,out = NaN;return,end
@@ -159,6 +182,7 @@ pB23(valid) = pB23_T(T(valid)); % [MPa] pressure on boundary between region 2 an
 valid1 = p>=psat & p<=pmax & T>=Tmin & T<=TB13; % valid range for region 1, include B13 in region 1
 valid2 = p>=pmin & ((T>=Tmin & T<=TB13 & p<=psat) | (T>TB13 & T<=TB23 & p<=pB23) | (T>TB23 & T<=Tmax & p<=pmax)); % valid range for region 2, include B23 in region 2
 valid3 = p>pB23 & p<=pmax & T>TB13 & T<TB23;
+% [valid1 valid2 valid3]
 if any(any(valid1))
     T1 = T(valid1);rho1bar = 1./v1_pT(p(valid1),T1)/rhostar;T1bar = T1/Tstar;
     k0 = sqrt(T1bar).*(a(1) + (a(2) + (a(3) + a(4).*T1bar).*T1bar).*T1bar);
@@ -2367,6 +2391,7 @@ delta = delta*ones(1,Nterms);
 tau = tau*ones(1,Nterms);
 dphidtau = sum(n.*delta.^I.*J.*tau.^(J-1),2);
 end
+
 function dphiddelta = dphiddelta3_rhoT(rho,T)
 dim = length(T);
 Tc = 647.096; % [K] critical point temperature
@@ -3359,3 +3384,406 @@ n = [7.28052609145380;97.3505869861952;14.7370491183191;329.196213998375;873.371
 theta = n(1)*log(pi).^I(1) + n(2)*log(pi).^I(2) + n(3)*log(pi).^I(3) + n(4)*log(pi).^I(4) + n(5)*log(pi).^I(5);
 T = theta*Tstar;
 end
+
+function [dgammadtau0,dgammadtauR] = d2gammadtau2_pT(p,T)
+dim = length(p);
+pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+%% ideal part
+J0 = [0,1,-5,-4,-3,-2,-1,2,3]; % ideal part exponenets
+n0 = [-9.69276865002170,10.0866559680180,-0.00560879112830200,0.0714527380814550,-0.407104982239280,1.42408191714440, ...
+    -4.38395113194500,-0.284086324607720,0.0212684637533070];
+N0terms = 9; % number of ideal terms in summation
+J0 = ones(dim,1)*J0;
+n0 = ones(dim,1)*n0;
+tau0 = tau*ones(1,N0terms);
+dgammadtau0 = sum(n0.*J0.*tau0.^(J0-1),2); % index sums of valid inputs into corresponding location in output array
+%% residual part
+IR = [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,5,6,6,6,7,7,7,8,8,9,10,10,10,16,16,18,20,20,20,21,22,23,24,24,24];
+JR = [0,1,2,3,6,1,2,4,7,36,0,1,3,6,35,1,2,3,7,3,16,35,0,11,25,8,36,13,4,10,14,29,50,57,20,35,48,21,53,39,26,40,58];
+nR = [-0.00177317424732130,-0.0178348622923580,-0.0459960136963650,-0.0575812590834320,-0.0503252787279300, ...
+    -3.30326416702030e-05,-0.000189489875163150,-0.00393927772433550,-0.0437972956505730,-2.66745479140870e-05, ...
+    2.04817376923090e-08,4.38706672844350e-07,-3.22776772385700e-05,-0.00150339245421480,-0.0406682535626490, ...
+    -7.88473095593670e-10,1.27907178522850e-08,4.82253727185070e-07,2.29220763376610e-06,-1.67147664510610e-11, ...
+    -0.00211714723213550,-23.8957419341040,-5.90595643242700e-18,-1.26218088991010e-06,-0.0389468424357390, ...
+    1.12562113604590e-11,-8.23113408979980,1.98097128020880e-08,1.04069652101740e-19,-1.02347470959290e-13, ...
+    -1.00181793795110e-09,-8.08829086469850e-11,0.106930318794090,-0.336622505741710,8.91858453554210e-25, ...
+    3.06293168762320e-13,-4.20024676982080e-06,-5.90560296856390e-26,3.78269476134570e-06,-1.27686089346810e-15, ...
+    7.30876105950610e-29,5.54147153507780e-17,-9.43697072412100e-07];
+NRterms = 43;
+IR = ones(dim,1)*IR;
+JR = ones(dim,1)*JR;
+nR = ones(dim,1)*nR;
+pi = pi*ones(1,NRterms);
+tauR = tau*ones(1,NRterms);
+dgammadtauR = sum(nR.*pi.^IR.*JR.*(tauR-0.5).^(JR-1),2);
+% dgammadtau = dgammadtau0 + dgammadtauR;
+end
+
+function [dgammadpi0,dgammadpiR] = d2gammadpi2_pT(p,T)
+dim = length(p);
+pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+%% ideal part
+dgammadpi0 = 1./pi;
+%% residual part
+IR = [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,5,6,6,6,7,7,7,8,8,9,10,10,10,16,16,18,20,20,20,21,22,23,24,24,24];
+JR = [0,1,2,3,6,1,2,4,7,36,0,1,3,6,35,1,2,3,7,3,16,35,0,11,25,8,36,13,4,10,14,29,50,57,20,35,48,21,53,39,26,40,58];
+nR = [-0.00177317424732130,-0.0178348622923580,-0.0459960136963650,-0.0575812590834320,-0.0503252787279300, ...
+    -3.30326416702030e-05,-0.000189489875163150,-0.00393927772433550,-0.0437972956505730,-2.66745479140870e-05, ...
+    2.04817376923090e-08,4.38706672844350e-07,-3.22776772385700e-05,-0.00150339245421480,-0.0406682535626490, ...
+    -7.88473095593670e-10,1.27907178522850e-08,4.82253727185070e-07,2.29220763376610e-06,-1.67147664510610e-11, ...
+    -0.00211714723213550,-23.8957419341040,-5.90595643242700e-18,-1.26218088991010e-06,-0.0389468424357390, ...
+    1.12562113604590e-11,-8.23113408979980,1.98097128020880e-08,1.04069652101740e-19,-1.02347470959290e-13, ...
+    -1.00181793795110e-09,-8.08829086469850e-11,0.106930318794090,-0.336622505741710,8.91858453554210e-25, ...
+    3.06293168762320e-13,-4.20024676982080e-06,-5.90560296856390e-26,3.78269476134570e-06,-1.27686089346810e-15, ...
+    7.30876105950610e-29,5.54147153507780e-17,-9.43697072412100e-07];
+NRterms = 43;
+IR = ones(dim,1)*IR;
+JR = ones(dim,1)*JR;
+nR = ones(dim,1)*nR;
+pi = pi*ones(1,NRterms);
+tau = tau*ones(1,NRterms);
+dgammadpiR = sum(nR.*IR.*pi.^(IR-1).*(tau-0.5).^JR,2);
+% dgammadpi = dgammadpi0 + dgammadpiR;
+end
+
+function [dgammadtautau0,dgammadtautauR] = d2gammadtautau2_pT(p,T)
+dim = length(p);
+pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+%% ideal part
+J0 = [0,1,-5,-4,-3,-2,-1,2,3]; % ideal part exponenets
+n0 = [-9.69276865002170,10.0866559680180,-0.00560879112830200,0.0714527380814550,-0.407104982239280,1.42408191714440, ...
+    -4.38395113194500,-0.284086324607720,0.0212684637533070];
+N0terms = 9; % number of ideal terms in summation
+J0 = ones(dim,1)*J0;
+n0 = ones(dim,1)*n0;
+tau0 = tau*ones(1,N0terms);
+dgammadtautau0 = sum(n0.*J0.*(J0-1).*tau0.^(J0-2),2); % summation terms
+%% residual part
+IR = [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,5,6,6,6,7,7,7,8,8,9,10,10,10,16,16,18,20,20,20,21,22,23,24,24,24];
+JR = [0,1,2,3,6,1,2,4,7,36,0,1,3,6,35,1,2,3,7,3,16,35,0,11,25,8,36,13,4,10,14,29,50,57,20,35,48,21,53,39,26,40,58];
+nR = [-0.00177317424732130,-0.0178348622923580,-0.0459960136963650,-0.0575812590834320,-0.0503252787279300, ...
+    -3.30326416702030e-05,-0.000189489875163150,-0.00393927772433550,-0.0437972956505730,-2.66745479140870e-05, ...
+    2.04817376923090e-08,4.38706672844350e-07,-3.22776772385700e-05,-0.00150339245421480,-0.0406682535626490, ...
+    -7.88473095593670e-10,1.27907178522850e-08,4.82253727185070e-07,2.29220763376610e-06,-1.67147664510610e-11, ...
+    -0.00211714723213550,-23.8957419341040,-5.90595643242700e-18,-1.26218088991010e-06,-0.0389468424357390, ...
+    1.12562113604590e-11,-8.23113408979980,1.98097128020880e-08,1.04069652101740e-19,-1.02347470959290e-13, ...
+    -1.00181793795110e-09,-8.08829086469850e-11,0.106930318794090,-0.336622505741710,8.91858453554210e-25, ...
+    3.06293168762320e-13,-4.20024676982080e-06,-5.90560296856390e-26,3.78269476134570e-06,-1.27686089346810e-15, ...
+    7.30876105950610e-29,5.54147153507780e-17,-9.43697072412100e-07];
+NRterms = 43;
+IR = ones(dim,1)*IR;
+JR = ones(dim,1)*JR;
+nR = ones(dim,1)*nR;
+pi = pi*ones(1,NRterms);
+tauR = tau*ones(1,NRterms);
+dgammadtautauR = sum(nR.*pi.^IR.*JR.*(JR-1).*(tauR-0.5).^(JR-2),2);
+% dgammadtautau = dgammadtautau0 + dgammadtautauR;
+end
+
+function [dgammadpipi0,dgammadpipiR] = d2gammadpipi2_pT(p,T)
+dim = length(p);
+pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+%% ideal part
+dgammadpipi0 = -1./pi.^2;
+%% residual part
+IR = [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,5,6,6,6,7,7,7,8,8,9,10,10,10,16,16,18,20,20,20,21,22,23,24,24,24];
+JR = [0,1,2,3,6,1,2,4,7,36,0,1,3,6,35,1,2,3,7,3,16,35,0,11,25,8,36,13,4,10,14,29,50,57,20,35,48,21,53,39,26,40,58];
+nR = [-0.00177317424732130,-0.0178348622923580,-0.0459960136963650,-0.0575812590834320,-0.0503252787279300, ...
+    -3.30326416702030e-05,-0.000189489875163150,-0.00393927772433550,-0.0437972956505730,-2.66745479140870e-05, ...
+    2.04817376923090e-08,4.38706672844350e-07,-3.22776772385700e-05,-0.00150339245421480,-0.0406682535626490, ...
+    -7.88473095593670e-10,1.27907178522850e-08,4.82253727185070e-07,2.29220763376610e-06,-1.67147664510610e-11, ...
+    -0.00211714723213550,-23.8957419341040,-5.90595643242700e-18,-1.26218088991010e-06,-0.0389468424357390, ...
+    1.12562113604590e-11,-8.23113408979980,1.98097128020880e-08,1.04069652101740e-19,-1.02347470959290e-13, ...
+    -1.00181793795110e-09,-8.08829086469850e-11,0.106930318794090,-0.336622505741710,8.91858453554210e-25, ...
+    3.06293168762320e-13,-4.20024676982080e-06,-5.90560296856390e-26,3.78269476134570e-06,-1.27686089346810e-15, ...
+    7.30876105950610e-29,5.54147153507780e-17,-9.43697072412100e-07];
+NRterms = 43;
+IR = ones(dim,1)*IR;
+JR = ones(dim,1)*JR;
+nR = ones(dim,1)*nR;
+pi = pi*ones(1,NRterms);
+tau = tau*ones(1,NRterms);
+dgammadpipiR = sum(nR.*IR.*(IR-1).*pi.^(IR-2).*(tau-0.5).^JR,2);
+% dgammadpipi = dgammadpipi0 + dgammadpipiR;
+end
+
+function [dgammadpitau0,dgammadpitauR] = d2gammadpitau2_pT(p,T)
+dim = length(p);
+pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+%% ideal part
+dgammadpitau0 = 0;
+%% residual part
+IR = [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,5,6,6,6,7,7,7,8,8,9,10,10,10,16,16,18,20,20,20,21,22,23,24,24,24];
+JR = [0,1,2,3,6,1,2,4,7,36,0,1,3,6,35,1,2,3,7,3,16,35,0,11,25,8,36,13,4,10,14,29,50,57,20,35,48,21,53,39,26,40,58];
+nR = [-0.00177317424732130,-0.0178348622923580,-0.0459960136963650,-0.0575812590834320,-0.0503252787279300, ...
+    -3.30326416702030e-05,-0.000189489875163150,-0.00393927772433550,-0.0437972956505730,-2.66745479140870e-05, ...
+    2.04817376923090e-08,4.38706672844350e-07,-3.22776772385700e-05,-0.00150339245421480,-0.0406682535626490, ...
+    -7.88473095593670e-10,1.27907178522850e-08,4.82253727185070e-07,2.29220763376610e-06,-1.67147664510610e-11, ...
+    -0.00211714723213550,-23.8957419341040,-5.90595643242700e-18,-1.26218088991010e-06,-0.0389468424357390, ...
+    1.12562113604590e-11,-8.23113408979980,1.98097128020880e-08,1.04069652101740e-19,-1.02347470959290e-13, ...
+    -1.00181793795110e-09,-8.08829086469850e-11,0.106930318794090,-0.336622505741710,8.91858453554210e-25, ...
+    3.06293168762320e-13,-4.20024676982080e-06,-5.90560296856390e-26,3.78269476134570e-06,-1.27686089346810e-15, ...
+    7.30876105950610e-29,5.54147153507780e-17,-9.43697072412100e-07];
+NRterms = 43;
+IR = ones(dim,1)*IR;
+JR = ones(dim,1)*JR;
+nR = ones(dim,1)*nR;
+pi = pi*ones(1,NRterms);
+tau = tau*ones(1,NRterms);
+dgammadpitauR = sum(nR.*IR.*pi.^(IR-1).*JR.*(tau-0.5).^(JR-1),2);
+% dgammadpitau = dgammadpitau0 + dgammadpitauR;
+end
+
+function w = w2_pT(p,T)
+pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+
+R = 1000*0.461526; % [J/kg/K] specific gas constant
+
+% [dgammadtau0,dgammadtauR] = d2gammadtau2_pT(p,T);
+[~,dgammadpiR] = d2gammadpi2_pT(p,T);
+[dgammadtautau0,dgammadtautauR] = d2gammadtautau2_pT(p,T);
+[~,dgammadpipiR] = d2gammadpipi2_pT(p,T);
+[~,dgammadpitauR] = d2gammadpitau2_pT(p,T);
+
+w = sqrt(R.*T.*((1 + 2.*pi.*dgammadpiR + pi.^2.*dgammadpiR.^2) ./...
+    ((1 - pi.^2.*dgammadpipiR) + ...
+    (1 + pi.*dgammadpiR - tau.*pi.*dgammadpitauR).^2 ./...
+    (tau.^2.*(dgammadtautau0+dgammadtautauR)))));
+
+end
+
+function w = w1_pT(p,T)
+% pstar = 16.53; % [MPa]
+Tstar = 1386; % [K]
+tau = Tstar./T; % temperature substitution variable
+
+R = 1000*0.461526; % [J/kg/K] specific gas constant
+
+dgammadpi = dgammadpi1_pT(p,T);
+dgammadpitau = dgammadpitau1_pT(p,T);
+dgammadtautau = dgammadtautau1_pT(p,T);
+dgammadpipi = dgammadpipi1_pT(p,T);
+
+w = sqrt(R.*T.*((dgammadpi).^2 ./ ((dgammadpi - tau.*dgammadpitau).^2./(tau.^2.*dgammadtautau) - dgammadpipi)));
+
+end
+
+function cv = cv1_pT(p,T)
+% pstar = 16.53; % [MPa]
+Tstar = 1386; % [K]
+% pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+R = 0.461526; % [kJ/kg/K] specific gas constant
+
+dgammadtautau = dgammadtautau1_pT(p,T);
+dgammadpi = dgammadpi1_pT(p,T);
+dgammadpitau = dgammadpitau1_pT(p,T);
+dgammadpipi = dgammadpipi1_pT(p,T);
+
+cv = R.*(-tau.^2.*dgammadtautau + (dgammadpi - tau.*dgammadpitau).^2./dgammadpipi);
+
+end
+
+function cv = cv2_pT(p,T)
+pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+R = 0.461526; % [kJ/kg/K] specific gas constant
+
+[~,dgammadpiR] = d2gammadpi2_pT(p,T);
+[dgammadtautau0,dgammadtautauR] = d2gammadtautau2_pT(p,T);
+[~,dgammadpipiR] = d2gammadpipi2_pT(p,T);
+[~,dgammadpitauR] = d2gammadpitau2_pT(p,T);
+
+cv = R.*(-tau.^2.*(dgammadtautau0 + dgammadtautauR) - (1 + pi.*dgammadpiR - tau.*pi.*dgammadpitauR).^2./(1 - pi.^2.*dgammadpipiR) );
+
+
+end
+
+function u = u1_pT(p,T)
+pstar = 16.53; % [MPa]
+Tstar = 1386; % [K]
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+R = 0.461526; % [kJ/kg/K] specific gas constant
+
+dgammadtau = dgammadtau1_pT(p,T);
+dgammadpi = dgammadpi1_pT(p,T);
+
+u = R.*T.*(tau.*dgammadtau - pi.*dgammadpi);
+
+end
+
+function u = u2_pT(p,T)
+pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+R = 0.461526; % [kJ/kg/K] specific gas constant
+
+[dgammadtau0,dgammadtauR] = d2gammadtau2_pT(p,T);
+[dgammadpi0,dgammadpiR] = d2gammadpi2_pT(p,T);
+
+u = R.*T.*(tau.*(dgammadtau0+dgammadtauR) - pi.*(dgammadpi0+dgammadpiR));
+
+end
+
+function s = s1_pT(p,T)
+% pstar = 16.53; % [MPa]
+Tstar = 1386; % [K]
+% pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+R = 0.461526; % [kJ/kg/K] specific gas constant
+
+dgammadtau = dgammadtau1_pT(p,T);
+gamma = gamma1_pT(p,T);
+s = R.*(tau.*dgammadtau - gamma);
+
+end
+
+function s = s2_pT(p,T)
+% pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+% pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+R = 0.461526; % [kJ/kg/K] specific gas constant
+
+[dgammadtau0,dgammadtauR] = d2gammadtau2_pT(p,T);
+[gamma0,gammaR] = gamma2_pT(p,T);
+s = R.*(tau.*(dgammadtau0+dgammadtauR) - (gamma0+gammaR));
+
+end
+
+
+
+
+function gamma = gamma1_pT(p,T)
+dim = length(p);
+pstar = 16.53; % [MPa]
+Tstar = 1386; % [K]
+pi = p/pstar;
+tau = Tstar./T;
+I = [0,0,0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,3,3,3,4,4,4,5,8,8,21,23,29,30,31,32];
+J = [-2,-1,0,1,2,3,4,5,-9,-7,-1,0,1,3,-3,0,1,3,17,-4,0,6,-5,-2,10,-8,-11,-6,-29,-31,-38,-39,-40,-41];
+n = [0.146329712131670,-0.845481871691140,-3.75636036720400,3.38551691683850,-0.957919633878720,0.157720385132280, ...
+    -0.0166164171995010,0.000812146299835680,0.000283190801238040,-0.000607063015658740,-0.0189900682184190, ...
+    -0.0325297487705050,-0.0218417171754140,-5.28383579699300e-05,-0.000471843210732670,-0.000300017807930260, ...
+    4.76613939069870e-05,-4.41418453308460e-06,-7.26949962975940e-16,-3.16796448450540e-05,-2.82707979853120e-06, ...
+    -8.52051281201030e-10,-2.24252819080000e-06,-6.51712228956010e-07,-1.43417299379240e-13,-4.05169968601170e-07, ...
+    -1.27343017416410e-09,-1.74248712306340e-10,-6.87621312955310e-19,1.44783078285210e-20,2.63357816627950e-23, ...
+    -1.19476226400710e-23,1.82280945814040e-24,-9.35370872924580e-26];
+Nterms = 34;
+I = ones(dim,1)*I;
+J = ones(dim,1)*J;
+n = ones(dim,1)*n;
+pi = pi*ones(1,Nterms);
+tau = tau*ones(1,Nterms);
+gamma = sum(n.*(7.1-pi).^I.*(tau-1.222).^J,2);
+% dgammadtau = sum(n.*(7.1-pi).^I.*J.*(tau-1.222).^(J-1),2);
+end
+
+function [gamma0,gammaR] = gamma2_pT(p,T)
+dim = length(p);
+pstar = 1; % [MPa] scaling pressure for nondimensional pressure, pi
+Tstar = 540; % [K] scaling temperature for nondimensional temperature substitution variable
+pi = p/pstar; % nondimensional pressure
+tau = Tstar./T; % temperature substitution variable
+%% ideal part
+J0 = [0,1,-5,-4,-3,-2,-1,2,3]; % ideal part exponenets
+n0 = [-9.69276865002170,10.0866559680180,-0.00560879112830200,0.0714527380814550,-0.407104982239280,1.42408191714440, ...
+    -4.38395113194500,-0.284086324607720,0.0212684637533070];
+N0terms = 9; % number of ideal terms in summation
+J0 = ones(dim,1)*J0;
+n0 = ones(dim,1)*n0;
+tau0 = tau*ones(1,N0terms);
+gamma0 = log(pi) + sum(n0.*tau0.^J0,2);
+
+%% residual part
+IR = [1,1,1,1,1,2,2,2,2,2,3,3,3,3,3,4,4,4,5,6,6,6,7,7,7,8,8,9,10,10,10,16,16,18,20,20,20,21,22,23,24,24,24];
+JR = [0,1,2,3,6,1,2,4,7,36,0,1,3,6,35,1,2,3,7,3,16,35,0,11,25,8,36,13,4,10,14,29,50,57,20,35,48,21,53,39,26,40,58];
+nR = [-0.00177317424732130,-0.0178348622923580,-0.0459960136963650,-0.0575812590834320,-0.0503252787279300, ...
+    -3.30326416702030e-05,-0.000189489875163150,-0.00393927772433550,-0.0437972956505730,-2.66745479140870e-05, ...
+    2.04817376923090e-08,4.38706672844350e-07,-3.22776772385700e-05,-0.00150339245421480,-0.0406682535626490, ...
+    -7.88473095593670e-10,1.27907178522850e-08,4.82253727185070e-07,2.29220763376610e-06,-1.67147664510610e-11, ...
+    -0.00211714723213550,-23.8957419341040,-5.90595643242700e-18,-1.26218088991010e-06,-0.0389468424357390, ...
+    1.12562113604590e-11,-8.23113408979980,1.98097128020880e-08,1.04069652101740e-19,-1.02347470959290e-13, ...
+    -1.00181793795110e-09,-8.08829086469850e-11,0.106930318794090,-0.336622505741710,8.91858453554210e-25, ...
+    3.06293168762320e-13,-4.20024676982080e-06,-5.90560296856390e-26,3.78269476134570e-06,-1.27686089346810e-15, ...
+    7.30876105950610e-29,5.54147153507780e-17,-9.43697072412100e-07];
+NRterms = 43;
+IR = ones(dim,1)*IR;
+JR = ones(dim,1)*JR;
+nR = ones(dim,1)*nR;
+pi = pi*ones(1,NRterms);
+tau = tau*ones(1,NRterms);
+gammaR = sum(nR.*pi.^IR.*(tau-0.5).^JR,2);
+% dgammadpiR = sum(nR.*IR.*pi.^(IR-1).*(tau-0.5).^JR,2);
+
+end
+
+function phi = phi3_rhoT(rho,T)
+dim = length(T);
+Tc = 647.096; % [K] critical point temperature
+rhoc = 322; % [kg/m^3] critical point density
+tau = Tc./T;
+delta = rho/rhoc;
+I = [0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,2,2,3,3,3,3,3,4,4,4,4,5,5,5,6,6,6,7,8,9,9,10,10,11];
+J = [0,1,2,7,10,12,23,2,6,15,17,0,2,6,7,22,26,0,2,4,16,26,0,2,4,26,1,3,26,0,2,26,2,26,2,26,0,1,26];
+n = [-15.7328452902390,20.9443969743070,-7.68677078787160,2.61859477879540,-2.80807811486200,1.20533696965170, ...
+    -0.00845668128125020,-1.26543154777140,-1.15244078066810,0.885210439843180,-0.642077651816070,0.384934601866710, ...
+    -0.852147088242060,4.89722815418770,-3.05026172569650,0.0394205368791540,0.125584084243080,-0.279993296987100, ...
+    1.38997995694600,-2.01899150235700,-0.00821476371739630,-0.475960357349230,0.0439840744735000,-0.444764354287390, ...
+    0.905720707197330,0.705224500879670,0.107705126263320,-0.329136232589540,-0.508710620411580,-0.0221754008730960, ...
+    0.0942607516650920,0.164362784479610,-0.0135033722413480,-0.0148343453524720,0.000579229536280840, ...
+    0.00323089047037110,8.09648029962150e-05,-0.000165576797950370,-4.49238990618150e-05];
+
+Nterms = 39;
+n0 = 1.065807002851300; % prexponential constant
+I = ones(dim,1)*I;
+J = ones(dim,1)*J;
+n = ones(dim,1)*n;
+deltaND = delta*ones(1,Nterms);
+tau = tau*ones(1,Nterms);
+
+phi = n0.*log(delta) + sum(n.*deltaND.^(I).*tau.^J,2);
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
