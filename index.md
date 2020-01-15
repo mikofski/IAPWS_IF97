@@ -22,7 +22,7 @@ Usage
 FUN is the desired function that may take 1 input, IN1, or 2 inputs, IN1 and IN2. IN1 and IN2 can be scalar, column vector or matrix, and IN1 and IN2 should be the same size. If a row vector is entered, it is transposed. If a scalar is entered for one input and the other input is a vector or matrix, then the scalar is repeated to form a vector or matrix of the same size as the other input.
 
 FUN is a string that is formed by the property symbol, an underscore and the property symbols the function depends on. EG: 'k_pT' is thermal conductivity, 'k', as a function of pressure, 'p', and temperature, 'T'. Derivatives are formed by prefixing 'd' to the property symbol and suffixing 'd' + the property symbol to which the derivative is with respect. EG: 'dTdp_ph' is the derivative of temperature with respect to
-pressure as a function of pressure and enthalpy, 'h' at constant enthalpy. The exception to this rule is 'cp_ph' which is equivalent to 'dTdh_ph' or the derivative of temperature with respect to enthalpy as a
+pressure as a function of pressure and enthalpy, 'h', at constant enthalpy. The exception to this rule is 'cp_ph' which is equivalent to '1/dTdh_ph' or the reciprocal of the derivative of temperature with respect to enthalpy as a
 function of pressure and enthalpy at constant pressure. All derivatives are with respect to pressure at constant enthalpy or v.v.
 
 Saturation is indicated by suffixing 'sat', saturated liquid 'L' and saturated vapor 'V'.
