@@ -21,11 +21,11 @@ function out = IAPWS_IF97(fun,in1,in2)
 %   'T'. Derivatives are formed by prefixing 'd' to the property symbol and
 %   suffixing 'd' + the property symbol to which the derivative is with
 %   respect. EG: 'dTdp_ph' is the derivative of temperature with respect to
-%   pressure as a function of pressure and enthalpy, 'h' at constant
+%   pressure as a function of pressure and enthalpy, 'h', at constant
 %   enthalpy. The exception to this rule is 'cp_ph' which is equivalent to
-%   'dTdh_ph' or the derivative of temperature with respect to pressure as a
-%   function of pressure and enthalpy at constant pressure. All derivatives
-%   are with respect to pressure at constant enthalpy or v.v.
+%   '1/dTdh_ph' or the reciprocal of the derivative of temperature with respect
+%   to enthalpy as a function of pressure and enthalpy at constant pressure.
+%   All derivatives are with respect to pressure at constant enthalpy or v.v.
 %
 %   Saturation is indicated by suffixing 'sat', saturated liquid 'L' and
 %   saturated vapor 'V'.
